@@ -1,4 +1,4 @@
-package test.model.output;
+package model.output;
 
 import org.junit.Test;
 
