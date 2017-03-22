@@ -1,0 +1,50 @@
+ToDo:
+* Add self, ally and enemy stat inputs
+* Add "check" inputs
+* Add the "use sub tree" input
+* Add the following GetPosition inputs (out of scope)
+	* all enemy list
+	* all ally list
+	* all agent list
+* Add exp
+	* To player
+	* To agents
+* Add level requirements for inputs
+* Tree cost
+	* Add cost to each input
+	* Add cost to each input type
+	* Add cost to each output
+	* Ensure this is compatiable with the "use sub tree"
+* Add tree validator (minimise the number of "Confused" actions)
+* Change TreeRenderer algorithm to deal with gaps in the tree at higher levels
+	* Split the circumference into sectors, based on the number of nodes at the current level.  All child nodes must fit into this sector
+	* The child node can expand the sector, by some margin, if there is no nodes in the adjacent sectors
+* Add tree interface
+	* Add tree and input type interface
+	* Add outputs to the interface
+	* Add input type to the interface
+* Logging
+* Unit test (out of scope)
+* System test (create maps to test criteria)
+	* Input
+		* Numeric
+		* Boolean
+		* Position
+	* Output
+	* Winning criteria
+* Add database for storing data
+	* Maps (blob data)
+	* Player information (single row)
+	* Trees (blob data linking to player)
+* Add multiplayer version
+	* Search for players
+	* Submit game (ability to deterministically replay the game - starting params + random seed)
+	* Save history (starting parameters + random seed)
+* Replay game
+	* Lookup on game history
+	* History processing
+		* Unit selection
+		* Action/decision display
+		* Time cycle (on click/play/pause)
+* Code control
+* Issue register

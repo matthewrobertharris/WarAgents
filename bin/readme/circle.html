@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<canvas id="myCanvas" width="800" height="800" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML5 canvas tag.</canvas>
+
+<script>
+var c = document.getElementById("myCanvas");
+var ctx = c.getContext("2d");
+ctx.beginPath();
+var maxNodes=5;
+var maxLevel=7;
+var levelHeight = 100;
+var radius = levelHeight;
+var centreX = 100;
+var centreY = 100;
+var nodes = Math.pow(maxNodes, maxLevel);
+//var degrees = 360 / nodes;
+var rad = 2 * Math.PI / nodes;
+ //alert("degrees=" + rad + " radius=" + radius + " nodes=" + nodes);
+ for(j = 1; j < maxLevel; j++) {
+	nodes = Math.pow(maxNodes, j);
+	//radius = radius + (radius * 0.5);
+	radius = levelHeight * j;
+	rad = 2 * Math.PI / nodes;
+	 for (i = 0; i < nodes/4; i++) { 
+		//alert("TEST");
+		var x = centreX + (radius * Math.cos(i * rad));
+		var y = centreY + (radius * Math.sin(i * rad));
+		//var t = (360 * arc) / (2 * Math.PI * radius);
+		var chord = radius * Math.sin(rad / 2);
+	   // alert(x + " y=" + y + " chord=" + chord);
+		ctx.arc(Math.round(x), Math.round(y), Math.round(chord), 0,  2 * Math.PI);
+	}
+ }
+
+
+
+
+ctx.stroke();
+
+</script> 
+
+</body>
+</html>

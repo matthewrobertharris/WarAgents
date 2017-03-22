@@ -1,0 +1,180 @@
+The idea for the game is inspired, and heavily based on Cells (http://phonons.wordpress.com/2010/06/01/cells-a-massively-multi-agent-python-programming-game/).  The actual simulation is very much similar, however, my game builds upon the coding of the 'minds' (how the agents act).  The high level concept is that you have multiple 'teams', where each team begins with 1 'cell' (or agent).  That cell begins life with a set of instructions, an algorithm if you will, on how to behave, based on a number of inputs and outputs, or actions it can perform.  For instance, if the cell sees an enemy cell it may chose to ATTACK.  In 'Cells' this type of decision had to be written in Python (the programming language), however, in this game the design of the algorithms IS the game.  This makes the game what I call a 0.5 player game.  It's not a single player game, because once the simulation is running the player cannot (really) interact, but it is not a 0 player game because the player does, indirectly, have control over the outcome via the input-decision-output algorithm.
+
+The game for the player is to construct a decision tree using a set of inputs and mapping these onto the internal nodes of the tree to outputs (actions) on the leaf nodes of the tree.  There is an exhaustive list of both inputs and outputs, as well as comparisons available to inputs (e.g. greater than, equal to, boolean true/false, etc.).  It is unclear whether the decision tree must be binary, implying that each decision must be formulated in the structure of a true/false statement, or whether they could be n-ary, for instance whether an enemy is in one of the 4 adjacent squares, yielding 4 decision paths.
+
+The goal of each game is also not clear either.  Are you aiming to annihalate the opposing team, or are you simply trying to survive?  Can you starve out the other team, weather the storm or simply overpower them?  I would suggest there is some continuum to victory, where simply surviving is the first step all the way through to being able to survive, seek and destroy other teams.  Where the player finds the most joy is their own victory, and game modes will be available to support all of these.
+
+
+
+
+
+The rules, inputs and outputs are a little backwards to understand.  I think it makes the most sense to start with the possible actions a cell can take and then work backwards from there to the rules that then govern these actions and finally to what inputs such actions can lead to.
+* Move left, move right, move up, move down
+* Lift dirt, drop dirt
+* Lift food, drop food
+* Attack left, attack right, attack up, attack down
+* Defend
+* Eat
+* Reproduce
+* Change decision tree
+
+
+
+
+
+Before we get to explaining these outputs, there are some high level rules that must be obeyed:
+* No 2 cells can occupy the same map position
+* Each position on the map has a height (at the moment the height is >= 0)
+* A cell cannot move to an adjacent cell where the height difference is > 2 (height diff = 0 is walk, height diff = 1 is jump, height diff = 2 is climb)
+* A cell can pick up dirt to decrement the height of its position by 1, but is then holding the dirt it picked up
+* A cell can deposit dirt, if it has it, anywhere
+* A cell can pick up 10 food, removing it from the map and picking it up
+* A cell can drop the food it is holding, adding to the map on its current position
+* A cell can no hold both dirt and food at the same time, it can only hold one at a time
+* A cell can only eat food from the ground (not food it is holding)
+* Dirt or food held by the plant when it dies is dropped onto its current location
+* If a cell dies, it drops 1/4 of its health on its death location (rounded down)
+* When a cell is produced, it has half of the parent's current health, and the parent maintains the other half
+* When a cell defends either a) or incoming damage is halved or b) its power is doubled (not sure on which is better yet)
+* When a cell attacks it deals damage based off a calculation between its power and the victims power.  The calculation is still in design
+* Damage directly takes health off a cell (1 to 1 ratio)
+* Food replenishes a cell's health (1 to 1 ratio)
+* When a cell reproduces, the new cell's position is randomly chosen from the 4 adjacent cells.  If none of the 4 cells are legal (e.g. out of bounds, occupied or too high), the reproduction fails
+* When a cell reproduces, the new cell's stats are randomly chosen to be between (95 * health/max_health)% and (105 * health/max_health)% of the parent's stat
+* Certain actions cost health to perform (simply because they are strenuous).  Climbing, attacking, any movement while holding something and changing decision tree (and obviously reproducing)
+* Some actions give cells XP (which actions is still TBC)
+* At certain XP limits the cell levels up (this should be random, based on the level, but is currently 2^Level)
+* When a cell levels up, it gains some stat increase (stat increase TBC.  It may be that there is some decision tree on how to level up the stats, just like behaviour)
+* The starting agents are sorted by speed to tell which one goes first
+* When new agents are produced, they go to the bottom of the agent list
+* Each turn, there is a single bubble sort performed on speed (which may mean the fastest bubbles to the top or slowest bubbles to the bottom each turn)
+* In addition to cells, the map contains plants, which produce food
+* Plants cannot be destroyed
+* Only 1 plant can occupy a single position
+* A plant and a cell can both be on the same position on the map
+* Plants put out half their output on their position and 1/8 of their output on each of the adjacent 4 squares
+
+Given the outputs and the rules, you should be able to deduce when each output would be invalid, and thus, what type of conditions you might need to check for before programming your cells to perform them.
+
+
+
+
+
+Before getting to the inputs, the player XP/level, must be described.  When playing, your agents will gain XP and level up.  At the end of each game (either via victory, defeat or forfeit) that XP is tallied up and given to the player.  This allows the player to level up (probably 10^level or some other exponential).  While all outputs are available to the player at all levels, the inputs available are player-level dependent.  So at low levels, only a small subset of inputs are available, and over time all inputs will become available.  The inputs are given below, in different categories:
+Basic (basic individual inputs):
+* Basic cell stats - health, position
+* Current square food
+* Current square height
+* Is move legal (boolean on height/boundaries/agent)
+* Purely random chance
+* Purely random output
+* Is enemy adjacent
+* Is food adjacent
+* Is ally adjacent
+
+Intermediate (advanced individual inputs)
+* Advanced cell stats - power, speed, XP, decision tree
+* Adjacent square height
+* Adjacent square food
+* Enemy adjacent position
+* Ally adjacent position
+* Plant adjacent position
+* Is reproduce legal (boolean on team size and adjacent tiles)
+
+Advanced (team based inputs)
+* Team enemy position (any enemies currently found by team)
+* Team plant position (any plants currently known by team)
+* Current team position (cell positions for current team)
+* Current team size
+* Stats about an enemy
+* Stats about an ally
+* Stats about a plant
+
+Master (grouped inputs)
+* Direction to (Next step in A* algorithm to a known position)
+* All checks on potential actions (that is, bundling checks together to see whether an action is legal, reducing the number of checks needed to take such action)
+
+The functions you can use to then compare are:
+* Boolean - true, false
+* Numeric - <, =, >
+* You will be able to call any value or result of a parent input (e.g. find a Team location and then chose to move towards that location in the next child node)
+* Position - left, right, up, down
+
+For some of these inputs, they will need a value or formula.  For instance, the "Random Chance" needs a value to say how random it is (e.g. 50% of the time, 20%, etc).  This is similar to things that compare a numeric value (e.g. cell health, cell power, enemy stats, etc).  This yields 3 child nodes, one for less than, one for equal to and one for greater than, for such inputs.  For other inputs, there is a fixed number of child nodes and they need no input, e.g. Enemy Adjacent position (it will only find the first one).  This type of input will always have 4 options, left, right, up and down (although we could probably program it to send the position to the next input and reduce the number of child nodes to 2 - true and false).  How we deal with things that combine adjacent squares with a numeric comparison need to be thought through, but at this stage you would need to ask the question for a specific square.  There are also the simple true/false nodes, such as "Is move legal", so these will only have 2 child nodes.  There may be some specific cases which don't adhere to this (e.g. "Team position ally/enemy").  How these special cases are dealt with will likely become apparent as work begins on the simpler test cases.  It is likely that there will need to be some ways to filter down (e.g. have a function available to the player that sorts enemy's on speed or distance, etc.)
+
+In addition to unlocking different input types, the player's level also unlocks additional decision tree slots - this in additional trees (so that cells can change mid game) and increasing tree depth (how many different inputs you can join together before making a decision).  
+
+
+
+
+There are also 3 different game modes: Training, PVE and PVP.
+* Training - you watch your team, turn by turn (or real time with pause) in a custom match that you chose the starting details.  XP earned here does not go towards your player XP.  You are able to change decision trees of your agents mid game, though, to see what works best in different situations (not sure how - whether this will cost food, like if you did it within the decision tree or whether you will change your entire team's tree, or whether you will only change individual cell's trees, or whether you can change all instances of a specific tree).  This mode is set up so you can see what your agents get up to during the game, and change strategy accordinly.  The opposition teams can be either pre-packaged or decision trees that you have created (this would be somewhat limiting to training, as there is a gap in trees that are above your current level but did not come pre-packaged).
+* PVE - These are battles which you do not get a replay of, but do receive some timelines (e.g. when attacks took place, what the total food count was, what the total population was, etc.).  In these battles, you fight non-player teams which have their decision trees hidden from you.  Any XP your cells earn goes directly onto your player score to help you level up.  The victory conditions here are varied, so you might just have to last a certain number of turns, or find a certain amount of food, or, if the situation demands it, annihilate the opposing teams
+* PVP - these are multi-player PVE battles, where you can pit your team against other players from all over the world.  These fights take place, again, behind closed doors, showing only the statistics from the battle back to both the defeated and the victor.  For PVP, each player has an 'active' team, which is used when other players challenge them to a fight, meaning that these fights can take place even when you're offline.  Note that XP when you are challenged doesn't count to your player XP, but XP gained from winning a challenge does (so it pays to win, not to just simply be challenged).  Note that XP for PVP and PVE is the same (although this may be boosted by purchasing in game items for a short period of time).
+
+
+
+
+Each map is procedurally generated for both heights, starting food, starting plant locations and starting agent locations.  You can customize maps if you wish, or simply play randomly generated ones, or seeded ones (such as those resembling islands, mountains, cities, plains, etc.).
+
+
+
+
+Teams can chose 1 special ability.  Such abilities bend the game rules to allow them some benefit that other teams may not enjoy.  These abilities are:
+* Fly - ability to move onto a height different of 3, not just 2
+* Attacker - attacks are more potent
+* Defender - defending is more potent
+* Destroyer - can destroy plants
+* Flash - speed is more potent
+* Juggernaut - max health is more potent
+* Druid - Can pick up and put down a plant (the plant doesn't produce while picked up.  It drops on the plant on death, like it would dirt or food.  If there is already a plant there, the dropped plant is shifted to the next nearest, plant-free location (so the plant cannot be destroyed)).
+* Learner - More XP is given per action
+* Climber - Climbing doesn't cost food
+* Mover - Moving with food/dirt doesn't cost food
+* Hawkeye - The field of vision is 1 extra square, opening up the availability of input options
+* Parent - Maintain more health (exactly how much, TBC) when reproducing
+* Adept - Changing decision tree doesn't cost food
+* Martyr - Drop 50% current health when dying, not 25%
+* Spy - Reveal the positions of enemies (not sure how to implement though)
+* Navigator - have access to the "Direction to" input earlier
+* Legislator - have access to the "All Checks" input earlier
+* Kamikaze - Agents can attack themselves (i.e. suicide)
+* 
+The monetization of this game will likely be the ability to buy these types and buy additional decision trees, so that the player can change mid game.  Each game can then have the player change it's special ability to more accurately suit the player's playing style.  The special ability should be tailored to the players play style, which doesn't really change, but the deicison tree can change, and will likely change, to respond to how the game is unfolding
+
+
+Some possible game modes are:
+* Survive for X turns
+* Collect X food
+* Annihilate (destroy all enemies)
+* Perform a certain action (e.g. kill an enemy, reproduce X times)
+* Construct certain terrain (e.g. move all the dirt from a hill)
+* Move to a certain location on the map (e.g. between islands by making a land bridge)
+* Find a certain plant
+
+
+
+
+
+For the input and output for the game, there are 3 different things - input type, values and outputs.  The player, when playing the game has "decision slots" into which input types are added.  There are (currently) 4 possible input types - single, double, triple and quadruple.  Each input slot represents different things.  
+The single input slot can only take an output.  For a double slot, the output is governed boolean decision.  The triple slot compares numeric values.  The quadrouple makes a decision on the 4 adjacent positions to the cell.
+Each of the inputs above can be broken up into certain (that is, outputs), which are slotted into single decisions, boolean decision (e.g. is move legal), numeric (agent's current health) and the position of something (e.g. ally position, although this one is optional).  
+The interface would start with a single 'slot' in the middle of the screen.  The player then drags an input type into the slot for what they want to decide on.  Depending on the input type selected, there will either be 1, 2, 3 or 4 new slots opened up for the process to repeat itself recursively.  Each input type requires some input to be placed into it.  For instance, the 2-input type (boolean) only requires a single input, some form of boolean input, for it to be valid.  The ternary input slot requires 2 inputs, the 2 values to compare (>, =, <).  For instance, 50 < RANDOM, which would mean something happens 50% of the time.  Not all inputs/outputs, therefore, can be dragged onto each input type - they are restricted in what they can be used for.  The interface should filter for the user when they select an input slot to make this easier.
+The interface should also validate that the input tree is valid before moving on.  For instance, if a ternary input type is not filled, then it shouldn't allow it to be saved.  It should, however, validate that valid inputs/outputs are assocaited with the correct input type.
+The input tree should have multiple 'styles' of display.  For instance, the regular 'tree' shape.  You could also balance the input types so that each connection is evenly balanced around the node (e.g. the first boolean node has one connection going up and one going down).
+The interface, with the single slot (growing as the player adds input types) would have the input types above, the inputs to the right and the outputs to the left.  The player can then drag and drop the different components to make their agent nodes.
+Each input, because they are restricted in some way by level, cost 'points'.  Each level you get more points to spend on your tree.  Different inputs cost different points, so the "is move legal" costs less points than "Direction to".  In this way higher level players can use more higher level decisions, but equally might find value in many low level decisions.  The points totals will ensure that there is benefit in using a higher level choice (e.g. instead of calling 4x1 point choices you could just call a 1x3 point choice).  Each output will be worth 1 point, so a boolean decision immediately costs half a quadrouple decision, even without the inputs taken into account.  In this way the size of the tree is not directly restricted by player level, just the number of inputs/outputs and input types are restricted (the leveling will need to be balanced)
+
+
+
+
+
+
+The display of the tree can be altered.  At the moment there are 3 different ways to display the tree:
+* Regular - where the parent appears above the children, and the overall tree takes a very triangular shape
+* Radial - where the root node appears at the centre of a circle and the layers of child nodes appear, evenly spaced, in rings around it.  
+	* This could be altered to alter the distance of each layer from the one before it, because the number of nodes increases exponentially, while the circumference of each circle only increases linearly
+	* This tree has some distinct advantages in that it expands to fill space in a circule, not a triangle, so the wasted space is far more evenly spread.
+	* The interface would work brilliantly with touch screens, allow rotation of the tree (swipe in direction of the radial layer), change layers (swipe perpendicular to the radial layer) and zoom (pinch)
+	* Auto focus on a node can also use some trickery to ensure that, at all times, the current node, it's siblings, it's parent and it's children, are all in view.  You can expand the distance between these nodes, and squeeze the layers together to ensure that, no matter the height, you can always see those mentioned nodes.  You can then use the swipe (change layer or rotate) to quickly move around the tree.
+* Fractal - The children of each node come out of the parent at set directions (e.g. 360 / N), but the size of the parent-child connection halves.  This way, the nodes will continually fill the space in between the currently existing tree in smaller and smaller space.  This type of tree will rely heavily on zoom features

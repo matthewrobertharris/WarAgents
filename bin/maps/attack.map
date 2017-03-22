@@ -1,0 +1,40 @@
+height=5
+width=5
+food=
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+dirt=
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+plants=0
+maxAgents=10
+players=5
+name=defender,speed=10,health=101,power=10,x=2,y=2,decision=12
+name=attackdown,speed=10,health=20,power=10,x=2,y=3,decision=11
+name=attackup,speed=10,health=20,power=10,x=2,y=1,decision=10
+name=attackleft,speed=10,health=20,power=10,x=3,y=2,decision=8
+name=attackright,speed=10,health=20,power=10,x=1,y=2,decision=9
+
+
+0	MOVE_LEFT
+1	MOVE_RIGHT
+2	MOVE_UP
+3	MOVE_DOWN
+4	LIFT_DIRT
+5	LIFT_FOOD
+6	DROP_DIRT
+7	DROP_FOOD
+8	ATTACK_LEFT
+9	ATTACK_RIGHT
+10	ATTACK_UP
+11	ATTACK_DOWN
+12	DEFEND
+13	EAT
+14	REPRODUCE
+15	CHANGE

@@ -1,0 +1,39 @@
+height=5
+width=5
+food=
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+dirt=
+1 1 1 1 1
+1 3 5 1 1
+1 3 5 1 1
+1 3 5 1 1
+1 1 1 1 1
+plants=0
+maxAgents=10
+players=4
+name=boundary,speed=15,health=20,power=10,x=1,y=1,decision=0:0:0:0:0:3:3:3:3:3:1:1:1:1:1:2:2:2:2:2
+name=height,speed=15,health=20,power=10,x=3,y=2,decision=0
+name=climber,speed=15,health=1,power=10,x=1,y=2,decision=1
+name=collision,speed=15,health=1,power=10,x=1,y=3,decision=3
+
+
+0	MOVE_LEFT
+1	MOVE_RIGHT
+2	MOVE_UP
+3	MOVE_DOWN
+4	LIFT_DIRT
+5	LIFT_FOOD
+6	DROP_DIRT
+7	DROP_FOOD
+8	ATTACK_LEFT
+9	ATTACK_RIGHT
+10	ATTACK_UP
+11	ATTACK_DOWN
+12	DEFEND
+13	EAT
+14	REPRODUCE
+15	CHANGE

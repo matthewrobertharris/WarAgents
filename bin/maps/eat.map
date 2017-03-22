@@ -1,0 +1,36 @@
+height=4
+width=4
+food=
+1 1 1 1
+1 1 1 1
+1 1 1 1
+1 1 1 1
+dirt=
+1 1 1 1
+1 1 1 1
+1 1 1 1
+1 1 1 1
+plants=1
+x=1,y=1,rate=10
+maxAgents=10
+players=2
+name=attacker,speed=15,health=20,power=10,x=2,y=1,decision=8:12
+name=eater,speed=15,health=20,power=10,x=1,y=1,decision=13
+
+
+0	MOVE_LEFT
+1	MOVE_RIGHT
+2	MOVE_UP
+3	MOVE_DOWN
+4	LIFT_DIRT
+5	LIFT_FOOD
+6	DROP_DIRT
+7	DROP_FOOD
+8	ATTACK_LEFT
+9	ATTACK_RIGHT
+10	ATTACK_UP
+11	ATTACK_DOWN
+12	DEFEND
+13	EAT
+14	REPRODUCE
+15	CHANGE
