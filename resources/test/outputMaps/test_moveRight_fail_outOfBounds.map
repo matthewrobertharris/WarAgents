@@ -1,0 +1,21 @@
+height=5
+width=5
+food=
+0 0 0 0 0
+0 0 0 0 0
+0 0 0 0 0
+0 0 0 0 0
+0 0 0 0 0
+dirt=
+0 0 0 0 0
+0 0 0 0 0
+0 0 0 0 0
+0 0 0 0 0
+0 0 0 0 0
+plants=0
+maxAgents=10
+name=test1,speed=10,health=100,power=10,x=4,y=2
+tree=default (OUTPUT MOVE_RIGHT)
+criteria=1
+SURVIVE_TURNS 10
+mode=CONST

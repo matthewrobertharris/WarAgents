@@ -12,7 +12,7 @@ public class Death extends Action {
 
 	@Override
 	public Activity getActivity() {
-		return Activity.SET_PRIMARY;
+		return Activity.DEATH;
 	}
 
 	public String toString() {

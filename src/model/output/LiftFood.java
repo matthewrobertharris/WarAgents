@@ -12,23 +12,24 @@ public class LiftFood extends Action {
 		int food = map.getTile(x, y).getFood();
 		if (food > 0) {
 			if (agent.getDirt() == 0) {
-				if (agent.getFood() == 0) {
-					if (Agent.PICKUP_FOOD > food) {
+				if (agent.getFood() < Agent.PICKUP_FOOD) {
+					int freeFood = Agent.PICKUP_FOOD - agent.getFood();
+					if (freeFood > food) {
 						map.getTile(x, y).setFood(0);
-						agent.setFood(food);
+						agent.setFood(food + agent.getFood());
 					} else {
-						map.getTile(x, y).setFood(food - Agent.PICKUP_FOOD);
+						map.getTile(x, y).setFood(food - freeFood);
 						agent.setFood(Agent.PICKUP_FOOD);
 					}
 					return true;
 				} else {
-					System.out.println("Cannot " + agent.getAction() + " because agent already has food");
+					System.out.println("Cannot " + agent.getAction() + " because agent already has maximum food");
 				}
 			} else {
 				System.out.println("Cannot " + agent.getAction() + " because agent already has dirt");
 			}
 		} else {
-			System.out.println("Cannot " + agent.getAction() + " because no dirt left on map");
+			System.out.println("Cannot " + agent.getAction() + " because no food left on map");
 		}
 		return false;
 	}

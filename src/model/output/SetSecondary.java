@@ -22,7 +22,7 @@ public class SetSecondary extends Action {
 
 	@Override
 	public boolean action(Agent agent, Map map) {
-		agent.setPrimary(getPosition().getPosition(agent, map));
+		agent.setSecondary(getPosition().getPosition(agent, map));
 		return true;
 	}
 

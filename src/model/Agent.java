@@ -10,7 +10,7 @@ import model.tree.Tree;
 public class Agent extends Thing {
 
 	public static final int PICKUP_FOOD = 10;
-	public static final int PICKUP_DIRT = 1;
+	public static final int PICKUP_DIRT = 2;
 	public static final int LEVEL_PROG = 2;
 	public static final int MOVE_HEALTH = 1;
 	private static int idCount = 0;
@@ -51,13 +51,13 @@ public class Agent extends Thing {
 		getVisited().add(new XY(x, y));
 		setDeath(-1);
 	}
-	
+
 	public XY getPreviousXY() {
 		return getVisited().get(getVisited().size() - 1);
 	}
-	
+
 	public Action getPreviousAction() {
-		if(getActionHistory().isEmpty()) {
+		if (getActionHistory().isEmpty()) {
 			return null;
 		}
 		return getActionHistory().get(getActionHistory().size() - 1);
@@ -220,18 +220,18 @@ public class Agent extends Thing {
 	}
 
 	// Use decision tree
-	public void update(Map map) {
+	public boolean update(Map map) {
 		try {
-		getHistory().add(new AgentHistory(this));
-		if(getHealth() < 1) {
-			Action.death(this, map);
-		}
-		else {
-			setAction(ProcessTree.decide(getTree().getRoot(), this, map));
-			getAction().action(this, map);
-		}
-		}
-		catch(Exception e) {
+			getHistory().add(new AgentHistory(this));
+			if (getHealth() < 1) {
+				Action.death(this, map);
+				return false;
+			} else {
+				setAction(ProcessTree.decide(getTree().getRoot(), this, map));
+				return getAction().action(this, map);
+			}
+		} catch (Exception e) {
+			System.out.println(e);
 			throw e;
 		}
 	}

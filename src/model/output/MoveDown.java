@@ -14,7 +14,7 @@ public class MoveDown extends Action {
 			int newDirt = map.getTile(newX, newY).getDirt();
 			if (Math.abs(dirt - newDirt) < 3) {
 				if (!map.getTile(newX, newY).isOccupied()) {
-					if (swap(agent, newX, newY, map.getTiles())) {
+					if (move(agent, newX, newY, map.getTiles())) {
 						return true;
 					} else {
 						System.out.println("Cannot " + agent.getAction() + " because move would kill");

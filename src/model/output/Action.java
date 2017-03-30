@@ -40,8 +40,33 @@ public abstract class Action {
 	protected boolean attack(Agent attacker, Agent defender, Map map) {
 		int health = defender.getHealth();
 		int power = attacker.getPower();
+		int defenderHeight = map.getTile(defender.getCurrentPos()).getDirt();
+		int attackerHeight = map.getTile(attacker.getCurrentPos()).getDirt();
+		int heightDiff = attackerHeight - defenderHeight;
 		if (defender.getAction() instanceof Defend) {
 			power /= 2;
+		}
+		switch (heightDiff) {
+		case 0:
+			// no change in power
+			break;
+		case 1:
+			power *= 2;
+			break;
+		case 2:
+			power *= 3;
+			break;
+		case 3:
+			power *= 4;
+			break;
+		case -1:
+			power /= 2;
+			break;
+		case -2:
+			power /= 3;
+			break;
+		default:
+			return false;
 		}
 		defender.setHealth(health - power);
 		if (defender.getHealth() < 1) {
@@ -120,31 +145,52 @@ public abstract class Action {
 		return (int) (value * chance);
 	}
 	
-	protected static boolean swap(Agent agent, int newX, int newY, Tile[][] map) {
+	protected static boolean move(Agent agent, int newX, int newY, Tile[][] map) {
 		int x = agent.getX();
 		int y = agent.getY();
 		int heightDiff = Math.abs(map[x][y].getDirt() - map[newX][newY].getDirt());
 
-		if (heightDiff > 1) {
-			if (agent.getHealth() > Agent.MOVE_HEALTH) {
-				map[newX][newY].setAgent(agent);
-				map[agent.getX()][agent.getY()].setAgent(null);
-				agent.setX(newX);
-				agent.setY(newY);
-				agent.addVisited(agent.getCurrentPos());
-				agent.setHealth(agent.getHealth() - Agent.MOVE_HEALTH);
+		if (heightDiff > 1 && (agent.getDirt() > 0 || agent.getFood() > 0)) {
+			if (agent.getHealth() > (2 * Agent.MOVE_HEALTH)) {
+				swap(agent, newX, newY, map);
+				agent.setHealth(agent.getHealth() - (2 * Agent.MOVE_HEALTH));
 				return true;
 			} else {
 				return false;
 			}
 		} else {
-			map[newX][newY].setAgent(agent);
-			map[agent.getX()][agent.getY()].setAgent(null);
-			agent.setX(newX);
-			agent.setY(newY);
-			agent.addVisited(agent.getCurrentPos());
-			return true;
+			if(heightDiff > 1) {
+				if (agent.getHealth() > Agent.MOVE_HEALTH) {
+					swap(agent, newX, newY, map);
+					agent.setHealth(agent.getHealth() - Agent.MOVE_HEALTH);
+					return true;
+				} else {
+					return false;
+				}
+			}
+			else {
+				if(agent.getDirt() > 0 || agent.getFood() > 0) {
+					if (agent.getHealth() > Agent.MOVE_HEALTH) {
+						swap(agent, newX, newY, map);
+						agent.setHealth(agent.getHealth() - Agent.MOVE_HEALTH);
+						return true;
+					} else {
+						return false;
+					}
+				}
+				else {
+					swap(agent, newX, newY, map);
+					return true;
+				}
+			}
 		}
-
+	}
+	
+	private static void swap(Agent agent, int newX, int newY, Tile[][] map) {
+		map[newX][newY].setAgent(agent);
+		map[agent.getX()][agent.getY()].setAgent(null);
+		agent.setX(newX);
+		agent.setY(newY);
+		agent.addVisited(agent.getCurrentPos());
 	}
 }

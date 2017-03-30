@@ -11,21 +11,27 @@ public class LiftDirt extends Action {
 		int y = agent.getY();
 		int dirt = map.getTile(x, y).getDirt();
 		// if (height > 0) {
-		if (agent.getDirt() == 0) {
-			if (agent.getFood() == 0) {
-				if (Agent.PICKUP_DIRT > dirt) {
-					map.getTile(x, y).setDirt(0);
-					agent.setDirt(dirt);
+
+		if (agent.getFood() == 0) {
+			if (dirt > 0) {
+				if (agent.getDirt() < Agent.PICKUP_DIRT) {
+					int freeDirt = Agent.PICKUP_DIRT - agent.getDirt();
+					if (freeDirt > dirt) {
+						map.getTile(x, y).setDirt(0);
+						agent.setDirt(dirt + agent.getDirt());
+					} else {
+						map.getTile(x, y).setDirt(dirt - freeDirt);
+						agent.setDirt(Agent.PICKUP_DIRT);
+					}
+					return true;
 				} else {
-					map.getTile(x, y).setDirt(dirt - Agent.PICKUP_DIRT);
-					agent.setDirt(Agent.PICKUP_DIRT);
+					System.out.println("Cannot " + agent.getAction() + " because agent already has maximum dirt");
 				}
-				return true;
 			} else {
-				System.out.println("Cannot " + agent.getAction() + " because agent already has food");
+				System.out.println("Cannot " + agent.getAction() + " because there is no dirt");
 			}
 		} else {
-			System.out.println("Cannot " + agent.getAction() + " because agent already has dirt");
+			System.out.println("Cannot " + agent.getAction() + " because agent already has food");
 		}
 		// } else {
 		// System.out.println("Cannot " + agent.getAction() + " because no dirt
@@ -33,12 +39,12 @@ public class LiftDirt extends Action {
 		// }
 		return false;
 	}
-	
+
 	public String toString() {
 		String output = getActivity().toString();
 		return output;
 	}
-	
+
 	@Override
 	public Activity getActivity() {
 		return Activity.LIFT_DIRT;

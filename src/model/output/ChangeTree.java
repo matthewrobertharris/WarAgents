@@ -27,6 +27,7 @@ public class ChangeTree extends Action {
 				return true;
 			}
 		}
+		System.out.println("Cannot " + agent.getAction() + " because no tree with that name exists");
 		return false;
 	}
 	
