@@ -11,6 +11,7 @@ import main.Game;
 import model.Agent;
 import model.Map;
 import model.output.Action.Activity;
+import model.position.Current;
 import readers.ActionReaderImpl;
 import readers.CriteriaReaderImpl;
 import readers.GameReader;
@@ -56,5 +57,13 @@ public class TestSetPrimary extends TestCase {
 		assertTrue(map.getAllAgents().size() == numAgents);
 		assertTrue(agent.getPrimary().getX() == x);
 		assertTrue(agent.getPrimary().getY() == y);
+	}
+	
+	@Test
+	public void test_ToString() {
+		Current position = new Current();
+		SetPrimary output = new SetPrimary(position);
+		String strOutput = "SET_PRIMARY";
+		assertTrue(output.toString().equals(strOutput));
 	}
 }

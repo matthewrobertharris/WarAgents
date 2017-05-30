@@ -95,4 +95,12 @@ public class TestChangeTree extends TestCase {
 		assertTrue(agent.getHealth() == health);
 		assertEquals(outContent.toString(), error);
 	}
+	
+	@Test
+	public void test_ToString() {
+		String tree = "test1";
+		ChangeTree output = new ChangeTree(tree);
+		String strOutput = "CHANGE_TREE";
+		assertTrue(output.toString().equals(strOutput));
+	}
 }

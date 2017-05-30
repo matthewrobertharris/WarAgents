@@ -57,4 +57,11 @@ public class TestClearPrimary extends TestCase {
 		assertTrue(map.getAllAgents().size() == numAgents);
 		assertTrue(agent.getPrimary() == null);
 	}
+	
+	@Test
+	public void test_ToString() {
+		ClearPrimary output = new ClearPrimary();
+		String strOutput = "CLEAR_PRIMARY";
+		assertTrue(output.toString().equals(strOutput));
+	}
 }

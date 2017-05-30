@@ -106,4 +106,11 @@ public class TestEat extends TestCase {
 		assertEquals(outContent.toString(), error);
 	}
 	
+	@Test
+	public void test_ToString() {
+		Eat output = new Eat();
+		String strOutput = "EAT";
+		assertTrue(output.toString().equals(strOutput));
+	}
+	
 }

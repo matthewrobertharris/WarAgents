@@ -209,4 +209,11 @@ public class TestAttackRight extends TestCase {
 		assertTrue(map.getAllAgents().size() == 2);
 		assertTrue(defender.getHealth() == (health - (power / 3)));
 	}
+	
+	@Test
+	public void test_ToString() {
+		AttackRight output = new AttackRight();
+		String strOutput = "ATTACK_RIGHT";
+		assertTrue(output.toString().equals(strOutput));
+	}
 }

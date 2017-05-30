@@ -70,4 +70,11 @@ public class TestDefend extends TestCase {
 		assertTrue(agent.getHealth() == 5);
 		assertTrue(map.getAllAgents().size() == 2);
 	}	
+	
+	@Test
+	public void test_ToString() {
+		Defend output = new Defend();
+		String strOutput = "DEFEND";
+		assertTrue(output.toString().equals(strOutput));
+	}
 }

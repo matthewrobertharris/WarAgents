@@ -146,4 +146,11 @@ public class TestLiftDirt extends TestCase {
 		assertEquals(outContent.toString(), error);
 	}
 	
+	@Test
+	public void test_ToString() {
+		LiftDirt output = new LiftDirt();
+		String strOutput = "LIFT_DIRT";
+		assertTrue(output.toString().equals(strOutput));
+	}
+	
 }

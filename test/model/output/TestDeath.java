@@ -53,4 +53,11 @@ public class TestDeath extends TestCase {
 		assertTrue(agent.getAction().getActivity() == Activity.DEATH);
 		assertTrue(map.getAllAgents().size() == (numAgents - 1));
 	}
+	
+	@Test
+	public void test_ToString() {
+		Death output = new Death();
+		String strOutput = "DEATH";
+		assertTrue(output.toString().equals(strOutput));
+	}
 }

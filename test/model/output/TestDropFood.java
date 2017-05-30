@@ -90,4 +90,11 @@ public class TestDropFood extends TestCase {
 		assertTrue( map.getTile(agent.getCurrentPos()).getFood() == (prevFood + newFood));
 		assertEquals(outContent.toString(), error);
 	}	
+	
+	@Test
+	public void test_ToString() {
+		DropFood output = new DropFood();
+		String strOutput = "DROP_FOOD";
+		assertTrue(output.toString().equals(strOutput));
+	}
 }

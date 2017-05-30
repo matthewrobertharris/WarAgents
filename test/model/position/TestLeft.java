@@ -1,4 +1,4 @@
-package model.output;
+package model.position;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -10,6 +10,9 @@ import junit.framework.TestCase;
 import main.Game;
 import model.Agent;
 import model.Map;
+import model.XY;
+import model.input.DecisionPosition;
+import model.input.position.DirectionTo;
 import model.output.Action.Activity;
 import readers.ActionReaderImpl;
 import readers.CriteriaReaderImpl;
@@ -23,7 +26,7 @@ import readers.PlayerReaderImpl;
 import readers.PositionReaderImpl;
 import readers.TreeReaderImpl;
 
-public class TestConfused extends TestCase {
+public class TestLeft extends TestCase {
 
 	private GameReader gameReader;
 	private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
@@ -42,38 +45,44 @@ public class TestConfused extends TestCase {
 	}
 
 	@Test
-	public void testConfused_Success_Survive() {
-		String file = "resources\\test\\outputMaps\\test_confused_success_survive.map";
+	public void testLeft_Success() {
+		String file = "resources\\test\\positionMaps\\test_left_success.map";
 		Game game = gameReader.readGame(file);
 		Map map = game.getMap();
 		Agent agent = map.getAllAgents().get(0);
-		int health = agent.getHealth();
-		int numAgents = map.getAllAgents().size();
+
+		DecisionPosition decision = (DecisionPosition)agent.getTree().getRoot().getInputs().get(0);
+		DirectionTo directionTo = (DirectionTo)decision;
+		XY position = directionTo.getPosition().getPosition(agent, map);
 		
+		assertTrue(position.getX() == agent.getCurrentPos().getX() - 1);
+		assertTrue(position.getY() == agent.getCurrentPos().getY());
+		assertTrue(agent.update(map));
+		assertTrue(agent.getAction().getActivity() == Activity.MOVE_LEFT);
+		assertTrue(map.getAllAgents().size() == 1);
+	}
+
+	@Test
+	public void testLeft_Fail_OutOfBounds() {
+		String file = "resources\\test\\positionMaps\\test_left_fail_outOfBounds.map";
+		Game game = gameReader.readGame(file);
+		Map map = game.getMap();
+		Agent agent = map.getAllAgents().get(0);
+
+		DecisionPosition decision = (DecisionPosition)agent.getTree().getRoot().getInputs().get(0);
+		DirectionTo directionTo = (DirectionTo)decision;
+		XY position = directionTo.getPosition().getPosition(agent, map);
+		
+		assertTrue(position == null);
 		assertTrue(agent.update(map));
 		assertTrue(agent.getAction().getActivity() == Activity.CONFUSED);
-		assertTrue(map.getAllAgents().size() == numAgents);
-		assertTrue(agent.getHealth() == (health - Confused.CONFUSED_HARM));
+		assertTrue(map.getAllAgents().size() == 1);
 	}
 	
 	@Test
-	public void testConfused_Success_Death() {
-		String file = "resources\\test\\outputMaps\\test_confused_success_survive.map";
-		Game game = gameReader.readGame(file);
-		Map map = game.getMap();
-		Agent agent = map.getAllAgents().get(0);
-		agent.setHealth(Confused.CONFUSED_HARM - 1);
-		int numAgents = map.getAllAgents().size();
-		
-		assertTrue(agent.update(map));
-		assertTrue(agent.getAction().getActivity() == Activity.CONFUSED);
-		assertTrue(map.getAllAgents().size() == (numAgents - 1));
-	}	
-	
-	@Test
 	public void test_ToString() {
-		Confused output = new Confused();
-		String strOutput = "CONFUSED";
-		assertTrue(output.toString().equals(strOutput));
+		Left position = new Left();
+		String output = "LEFT";
+		assertTrue(position.toString().equals(output));
 	}
 }

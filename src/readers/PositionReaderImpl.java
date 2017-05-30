@@ -4,15 +4,15 @@ import java.util.List;
 
 import model.input.GetPosition;
 import model.input.GetPosition.Position;
-import model.input.getposition.Current;
-import model.input.getposition.Down;
-import model.input.getposition.Left;
-import model.input.getposition.Previous;
-import model.input.getposition.Primary;
-import model.input.getposition.Right;
-import model.input.getposition.Secondary;
-import model.input.getposition.Up;
-import model.input.getposition.XYValue;
+import model.position.Current;
+import model.position.Down;
+import model.position.Left;
+import model.position.Previous;
+import model.position.Primary;
+import model.position.Right;
+import model.position.Secondary;
+import model.position.Up;
+import model.position.XYValue;
 
 public class PositionReaderImpl implements PositionReader {
 

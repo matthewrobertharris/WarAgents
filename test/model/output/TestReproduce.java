@@ -87,8 +87,53 @@ public class TestReproduce extends TestCase {
 	}
 	
 	@Test
-	public void testReproduce_Success_1Free() {
-		String file = "resources\\test\\outputMaps\\test_reproduce_success_1free.map";
+	public void testReproduce_Success_LeftFree() {
+		String file = "resources\\test\\outputMaps\\test_reproduce_success_leftFree.map";
+		Game game = gameReader.readGame(file);
+		Map map = game.getMap();
+		Agent agent = map.getAllAgents().get(0);
+		int numAgents = map.getAllAgents().size();
+		int health = agent.getHealth();
+		
+		assertTrue(agent.update(map));
+		assertTrue(agent.getAction().getActivity() == Activity.REPRODUCE);
+		assertTrue(map.getAllAgents().size() == (numAgents + 1)); 
+		assertTrue(agent.getHealth() == (health / 2));
+	}
+	
+	@Test
+	public void testReproduce_Success_RightFree() {
+		String file = "resources\\test\\outputMaps\\test_reproduce_success_rightFree.map";
+		Game game = gameReader.readGame(file);
+		Map map = game.getMap();
+		Agent agent = map.getAllAgents().get(0);
+		int numAgents = map.getAllAgents().size();
+		int health = agent.getHealth();
+		
+		assertTrue(agent.update(map));
+		assertTrue(agent.getAction().getActivity() == Activity.REPRODUCE);
+		assertTrue(map.getAllAgents().size() == (numAgents + 1)); 
+		assertTrue(agent.getHealth() == (health / 2));
+	}
+	
+	@Test
+	public void testReproduce_Success_DownFree() {
+		String file = "resources\\test\\outputMaps\\test_reproduce_success_downFree.map";
+		Game game = gameReader.readGame(file);
+		Map map = game.getMap();
+		Agent agent = map.getAllAgents().get(0);
+		int numAgents = map.getAllAgents().size();
+		int health = agent.getHealth();
+		
+		assertTrue(agent.update(map));
+		assertTrue(agent.getAction().getActivity() == Activity.REPRODUCE);
+		assertTrue(map.getAllAgents().size() == (numAgents + 1)); 
+		assertTrue(agent.getHealth() == (health / 2));
+	}
+	
+	@Test
+	public void testReproduce_Success_UpFree() {
+		String file = "resources\\test\\outputMaps\\test_reproduce_success_upFree.map";
 		Game game = gameReader.readGame(file);
 		Map map = game.getMap();
 		Agent agent = map.getAllAgents().get(0);
@@ -119,8 +164,42 @@ public class TestReproduce extends TestCase {
 	}
 	
 	@Test
-	public void testReproduce_Fail_BoundaryOccpied() {
-		String file = "resources\\test\\outputMaps\\test_reproduce_fail_boundaryOccupied.map";
+	public void testReproduce_Fail_Heights() {
+		String file = "resources\\test\\outputMaps\\test_reproduce_fail_heights.map";
+		String error = "Cannot REPRODUCE no extra locations\r\n";
+		Game game = gameReader.readGame(file);
+		Map map = game.getMap();
+		Agent agent = map.getAllAgents().get(0);
+		int numAgents = map.getAllAgents().size();
+		int health = agent.getHealth();
+		
+		assertFalse(agent.update(map));
+		assertTrue(agent.getAction().getActivity() == Activity.REPRODUCE);
+		assertTrue(map.getAllAgents().size() == numAgents); 
+		assertTrue(agent.getHealth() == health);
+		assertEquals(outContent.toString(), error);
+	}
+	
+	@Test
+	public void testReproduce_Fail_BoundaryTopLeftOccpied() {
+		String file = "resources\\test\\outputMaps\\test_reproduce_fail_boundaryTopLeftOccupied.map";
+		String error = "Cannot REPRODUCE no extra locations\r\n";
+		Game game = gameReader.readGame(file);
+		Map map = game.getMap();
+		Agent agent = map.getAllAgents().get(0);
+		int numAgents = map.getAllAgents().size();
+		int health = agent.getHealth();
+		
+		assertFalse(agent.update(map));
+		assertTrue(agent.getAction().getActivity() == Activity.REPRODUCE);
+		assertTrue(map.getAllAgents().size() == numAgents); 
+		assertTrue(agent.getHealth() == health);
+		assertEquals(outContent.toString(), error);
+	}
+	
+	@Test
+	public void testReproduce_Fail_BoundaryBottomRightOccpied() {
+		String file = "resources\\test\\outputMaps\\test_reproduce_fail_boundaryBottomRightOccupied.map";
 		String error = "Cannot REPRODUCE no extra locations\r\n";
 		Game game = gameReader.readGame(file);
 		Map map = game.getMap();
@@ -168,5 +247,12 @@ public class TestReproduce extends TestCase {
 		assertTrue(map.getAllAgents().size() == numAgents); 
 		assertTrue(agent.getHealth() == health);
 		assertEquals(outContent.toString(), error);
+	}
+	
+	@Test
+	public void test_ToString() {
+		Reproduce output = new Reproduce();
+		String strOutput = "REPRODUCE";
+		assertTrue(output.toString().equals(strOutput));
 	}
 }

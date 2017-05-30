@@ -146,4 +146,11 @@ public class TestLiftFood extends TestCase {
 		assertEquals(outContent.toString(), error);
 	}
 	
+	@Test
+	public void test_ToString() {
+		LiftFood output = new LiftFood();
+		String strOutput = "LIFT_FOOD";
+		assertTrue(output.toString().equals(strOutput));
+	}
+	
 }

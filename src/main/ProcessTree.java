@@ -86,7 +86,7 @@ public class ProcessTree {
 	}
 
 	public static Action decide4(Node node, Agent agent, Map map){
-		if (node.getInputs().size() == 5) {
+		if (node.getInputs().size() == 1) {
 			if (node.getChildren().size() == 5) {
 				try {
 					DecisionPosition decision1 = (DecisionPosition) node.getInputs().get(0);

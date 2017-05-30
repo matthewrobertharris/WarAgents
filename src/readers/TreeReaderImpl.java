@@ -123,11 +123,12 @@ public class TreeReaderImpl implements TreeReader {
 	}
 
 	private Node convertPosition(Node parent, List<String> values, Tree tree) {
-		int type = 2;
+		int type = 4;
 		List<Input> inputs = new ArrayList<Input>();
 		List<Node> children = new ArrayList<Node>();
 		Node node = new Node(inputs, type, children, parent, tree);
 		inputs.add(convertInput(values));
+		children.add(convertNode(node, values, tree));
 		children.add(convertNode(node, values, tree));
 		children.add(convertNode(node, values, tree));
 		children.add(convertNode(node, values, tree));

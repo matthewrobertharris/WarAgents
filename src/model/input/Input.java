@@ -20,11 +20,11 @@ public abstract class Input {
 	}
 
 	protected boolean xInBounds(int x, Map map) {
-		return (x > 0 && x < map.getWidth());
+		return (x >= 0 && x < map.getWidth());
 	}
 
 	protected boolean yInBounds(int y, Map map) {
-		return (y > 0 && y < map.getHeight());
+		return (y >= 0 && y < map.getHeight());
 	}
 
 	protected boolean occupied(int x, int y, Map map) {

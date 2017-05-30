@@ -1,4 +1,4 @@
-package model.output;
+package model.position;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -10,8 +10,10 @@ import junit.framework.TestCase;
 import main.Game;
 import model.Agent;
 import model.Map;
+import model.XY;
+import model.input.DecisionPosition;
+import model.input.position.DirectionTo;
 import model.output.Action.Activity;
-import model.position.Current;
 import readers.ActionReaderImpl;
 import readers.CriteriaReaderImpl;
 import readers.GameReader;
@@ -24,7 +26,7 @@ import readers.PlayerReaderImpl;
 import readers.PositionReaderImpl;
 import readers.TreeReaderImpl;
 
-public class TestSetSecondary extends TestCase {
+public class TestCurrent extends TestCase {
 
 	private GameReader gameReader;
 	private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
@@ -43,27 +45,27 @@ public class TestSetSecondary extends TestCase {
 	}
 
 	@Test
-	public void testSetSecondary_Success() {
-		String file = "resources\\test\\outputMaps\\test_setSecondary_success.map";
+	public void testCurrent_Success() {
+		String file = "resources\\test\\positionMaps\\test_current_success.map";
 		Game game = gameReader.readGame(file);
 		Map map = game.getMap();
 		Agent agent = map.getAllAgents().get(0);
-		int numAgents = map.getAllAgents().size();
-		int x = 0;
-		int y = 0;
+
+		DecisionPosition decision = (DecisionPosition)agent.getTree().getRoot().getInputs().get(0);
+		DirectionTo directionTo = (DirectionTo)decision;
+		XY position = directionTo.getPosition().getPosition(agent, map);
 		
+		assertTrue(position.getX() == agent.getCurrentPos().getX());
+		assertTrue(position.getY() == agent.getCurrentPos().getY());
 		assertTrue(agent.update(map));
-		assertTrue(agent.getAction().getActivity() == Activity.SET_SECONDARY);
-		assertTrue(map.getAllAgents().size() == numAgents);
-		assertTrue(agent.getSecondary().getX() == x);
-		assertTrue(agent.getSecondary().getY() == y);
+		assertTrue(agent.getAction().getActivity() == Activity.DEFEND);
+		assertTrue(map.getAllAgents().size() == 1);
 	}
 	
 	@Test
 	public void test_ToString() {
 		Current position = new Current();
-		SetSecondary output = new SetSecondary(position);
-		String strOutput = "SET_SECONDARY";
-		assertTrue(output.toString().equals(strOutput));
+		String output = "CURRENT";
+		assertTrue(position.toString().equals(output));
 	}
 }

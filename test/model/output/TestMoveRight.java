@@ -58,8 +58,8 @@ public class TestMoveRight extends TestCase {
 	}	
 	
 	@Test
-	public void testMoveRight_Success_FlatCarrying() {
-		String file = "resources\\test\\outputMaps\\test_moveRight_success_flatCarrying.map";
+	public void testMoveRight_Success_FlatCarryingDirt() {
+		String file = "resources\\test\\outputMaps\\test_moveRight_success_flatCarryingDirt.map";
 		Game game = gameReader.readGame(file);
 		Map map = game.getMap();
 		Agent agent = map.getAllAgents().get(0);
@@ -75,6 +75,25 @@ public class TestMoveRight extends TestCase {
 		assertTrue((x + 1) == agent.getX());
 		assertTrue(y == agent.getY());
 	}	
+	
+	@Test
+	public void testMoveRight_Success_FlatCarryingFood() {
+		String file = "resources\\test\\outputMaps\\test_moveRight_success_flatCarryingFood.map";
+		Game game = gameReader.readGame(file);
+		Map map = game.getMap();
+		Agent agent = map.getAllAgents().get(0);
+		agent.setFood(Agent.PICKUP_FOOD);
+		int health = agent.getHealth();
+		int x = agent.getX();
+		int y = agent.getY();
+		
+		assertTrue(agent.update(map));
+		assertTrue(agent.getAction().getActivity() == Activity.MOVE_RIGHT);
+		assertTrue(map.getAllAgents().size() == 1);
+		assertTrue(agent.getHealth() == (health - Agent.MOVE_HEALTH));
+		assertTrue((x + 1) == agent.getX());
+		assertTrue(y == agent.getY());
+	}
 	
 	@Test
 	public void testMoveRight_Success_HeightDifference() {
@@ -95,8 +114,8 @@ public class TestMoveRight extends TestCase {
 	}	
 	
 	@Test
-	public void testMoveRight_Success_HeightCarrying() {
-		String file = "resources\\test\\outputMaps\\test_moveRight_success_heightCarrying.map";
+	public void testMoveRight_Success_HeightCarryingDirt() {
+		String file = "resources\\test\\outputMaps\\test_moveRight_success_heightCarryingDirt.map";
 		Game game = gameReader.readGame(file);
 		Map map = game.getMap();
 		Agent agent = map.getAllAgents().get(0);
@@ -112,6 +131,25 @@ public class TestMoveRight extends TestCase {
 		assertTrue((x + 1) == agent.getX());
 		assertTrue(y == agent.getY());
 	}	
+	
+	@Test
+	public void testMoveRight_Success_HeightCarryingFood() {
+		String file = "resources\\test\\outputMaps\\test_moveRight_success_heightCarryingFood.map";
+		Game game = gameReader.readGame(file);
+		Map map = game.getMap();
+		Agent agent = map.getAllAgents().get(0);
+		agent.setFood(Agent.PICKUP_FOOD);
+		int health = agent.getHealth();
+		int x = agent.getX();
+		int y = agent.getY();
+		
+		assertTrue(agent.update(map));
+		assertTrue(agent.getAction().getActivity() == Activity.MOVE_RIGHT);
+		assertTrue(map.getAllAgents().size() == 1);
+		assertTrue(agent.getHealth() == (health - (2 * Agent.MOVE_HEALTH)));
+		assertTrue((x + 1) == agent.getX());
+		assertTrue(y == agent.getY());
+	}
 	
 	@Test
 	public void testMoveRight_Fail_HeightDifference() {
@@ -230,5 +268,12 @@ public class TestMoveRight extends TestCase {
 		assertTrue(y == agent.getY());
 		assertEquals(outContent.toString(), error);
 		
+	}
+	
+	@Test
+	public void test_ToString() {
+		MoveRight output = new MoveRight();
+		String strOutput = "MOVE_RIGHT";
+		assertTrue(output.toString().equals(strOutput));
 	}
 }

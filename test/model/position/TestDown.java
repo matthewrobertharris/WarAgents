@@ -1,4 +1,4 @@
-package model.output;
+package model.position;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -11,6 +11,8 @@ import main.Game;
 import model.Agent;
 import model.Map;
 import model.XY;
+import model.input.DecisionPosition;
+import model.input.position.DirectionTo;
 import model.output.Action.Activity;
 import readers.ActionReaderImpl;
 import readers.CriteriaReaderImpl;
@@ -24,7 +26,7 @@ import readers.PlayerReaderImpl;
 import readers.PositionReaderImpl;
 import readers.TreeReaderImpl;
 
-public class TestClearSecondary extends TestCase {
+public class TestDown extends TestCase {
 
 	private GameReader gameReader;
 	private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
@@ -43,25 +45,44 @@ public class TestClearSecondary extends TestCase {
 	}
 
 	@Test
-	public void testClearSecondary_Success() {
-		String file = "resources\\test\\outputMaps\\test_clearSecondary_success.map";
+	public void testDown_Success() {
+		String file = "resources\\test\\positionMaps\\test_down_success.map";
 		Game game = gameReader.readGame(file);
 		Map map = game.getMap();
 		Agent agent = map.getAllAgents().get(0);
-		int numAgents = map.getAllAgents().size();
-		XY secondary = new XY(0, 0);
-		agent.setSecondary(secondary);
+
+		DecisionPosition decision = (DecisionPosition)agent.getTree().getRoot().getInputs().get(0);
+		DirectionTo directionTo = (DirectionTo)decision;
+		XY position = directionTo.getPosition().getPosition(agent, map);
 		
+		assertTrue(position.getX() == 2);
+		assertTrue(position.getY() == 1);
 		assertTrue(agent.update(map));
-		assertTrue(agent.getAction().getActivity() == Activity.CLEAR_SECONDARY);
-		assertTrue(map.getAllAgents().size() == numAgents);
-		assertTrue(agent.getSecondary() == null);
+		assertTrue(agent.getAction().getActivity() == Activity.MOVE_DOWN);
+		assertTrue(map.getAllAgents().size() == 1);
+	}
+
+	@Test
+	public void testDown_Fail_OutOfBounds() {
+		String file = "resources\\test\\positionMaps\\test_down_fail_outOfBounds.map";
+		Game game = gameReader.readGame(file);
+		Map map = game.getMap();
+		Agent agent = map.getAllAgents().get(0);
+
+		DecisionPosition decision = (DecisionPosition)agent.getTree().getRoot().getInputs().get(0);
+		DirectionTo directionTo = (DirectionTo)decision;
+		XY position = directionTo.getPosition().getPosition(agent, map);
+		
+		assertTrue(position == null);
+		assertTrue(agent.update(map));
+		assertTrue(agent.getAction().getActivity() == Activity.CONFUSED);
+		assertTrue(map.getAllAgents().size() == 1);
 	}
 	
 	@Test
 	public void test_ToString() {
-		ClearSecondary output = new ClearSecondary();
-		String strOutput = "CLEAR_SECONDARY";
-		assertTrue(output.toString().equals(strOutput));
+		Down position = new Down();
+		String output = "DOWN";
+		assertTrue(position.toString().equals(output));
 	}
 }

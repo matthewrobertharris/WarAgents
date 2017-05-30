@@ -1,4 +1,4 @@
-package model.output;
+package model.position;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -10,6 +10,9 @@ import junit.framework.TestCase;
 import main.Game;
 import model.Agent;
 import model.Map;
+import model.XY;
+import model.input.DecisionPosition;
+import model.input.position.DirectionTo;
 import model.output.Action.Activity;
 import readers.ActionReaderImpl;
 import readers.CriteriaReaderImpl;
@@ -23,7 +26,7 @@ import readers.PlayerReaderImpl;
 import readers.PositionReaderImpl;
 import readers.TreeReaderImpl;
 
-public class TestConfused extends TestCase {
+public class TestPrevious extends TestCase {
 
 	private GameReader gameReader;
 	private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
@@ -42,38 +45,46 @@ public class TestConfused extends TestCase {
 	}
 
 	@Test
-	public void testConfused_Success_Survive() {
-		String file = "resources\\test\\outputMaps\\test_confused_success_survive.map";
+	public void testPrevious_Success() {
+		String file = "resources\\test\\positionMaps\\test_previous_success.map";
 		Game game = gameReader.readGame(file);
 		Map map = game.getMap();
 		Agent agent = map.getAllAgents().get(0);
-		int health = agent.getHealth();
-		int numAgents = map.getAllAgents().size();
+		XY previous = new XY(1, 2);
+		agent.getVisited().add(0, previous);
+
+		DecisionPosition decision = (DecisionPosition)agent.getTree().getRoot().getInputs().get(0);
+		DirectionTo directionTo = (DirectionTo)decision;
+		XY position = directionTo.getPosition().getPosition(agent, map);
 		
+		assertTrue(position.getX() == 1);
+		assertTrue(position.getY() == 2);
 		assertTrue(agent.update(map));
-		assertTrue(agent.getAction().getActivity() == Activity.CONFUSED);
-		assertTrue(map.getAllAgents().size() == numAgents);
-		assertTrue(agent.getHealth() == (health - Confused.CONFUSED_HARM));
+		assertTrue(agent.getAction().getActivity() == Activity.MOVE_LEFT);
+		assertTrue(map.getAllAgents().size() == 1);
 	}
 	
 	@Test
-	public void testConfused_Success_Death() {
-		String file = "resources\\test\\outputMaps\\test_confused_success_survive.map";
+	public void testPrevious_Fail_NotSet() {
+		String file = "resources\\test\\positionMaps\\test_previous_fail_noPrevious.map";
 		Game game = gameReader.readGame(file);
 		Map map = game.getMap();
 		Agent agent = map.getAllAgents().get(0);
-		agent.setHealth(Confused.CONFUSED_HARM - 1);
-		int numAgents = map.getAllAgents().size();
+
+		DecisionPosition decision = (DecisionPosition)agent.getTree().getRoot().getInputs().get(0);
+		DirectionTo directionTo = (DirectionTo)decision;
+		XY position = directionTo.getPosition().getPosition(agent, map);
 		
+		assertTrue(position == null);
 		assertTrue(agent.update(map));
 		assertTrue(agent.getAction().getActivity() == Activity.CONFUSED);
-		assertTrue(map.getAllAgents().size() == (numAgents - 1));
-	}	
+		assertTrue(map.getAllAgents().size() == 1);
+	}
 	
 	@Test
 	public void test_ToString() {
-		Confused output = new Confused();
-		String strOutput = "CONFUSED";
-		assertTrue(output.toString().equals(strOutput));
+		Previous position = new Previous();
+		String output = "PREVIOUS";
+		assertTrue(position.toString().equals(output));
 	}
 }

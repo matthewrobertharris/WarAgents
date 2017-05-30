@@ -102,7 +102,7 @@ public abstract class Action {
 				// Check up
 				if ((y + 1) < map.getHeight() && !map.getTile(x, y + 1).isOccupied()) {
 					if (Math.abs(map.getTile(x, y + 1).getDirt() - map.getTile(x, y).getDirt()) > 2) {
-						return null;
+						continue;
 					} else {
 						return new int[] { x, y + 1 };
 					}
@@ -111,7 +111,7 @@ public abstract class Action {
 				// Check left
 				if ((x - 1) >= 0 && !map.getTile(x - 1, y).isOccupied()) {
 					if (Math.abs(map.getTile(x - 1, y).getDirt() - map.getTile(x, y).getDirt()) > 2) {
-						return null;
+						continue;
 					} else {
 						return new int[] { x - 1, y };
 					}
@@ -120,7 +120,7 @@ public abstract class Action {
 				// Check right
 				if ((x + 1) < map.getWidth() && !map.getTile(x + 1, y).isOccupied()) {
 					if (Math.abs(map.getTile(x + 1, y).getDirt() - map.getTile(x, y).getDirt()) > 2) {
-						return null;
+						continue;
 					} else {
 						return new int[] { x + 1, y };
 					}
@@ -129,7 +129,7 @@ public abstract class Action {
 				// Check down
 				if ((y - 1) >= 0 && !map.getTile(x, y - 1).isOccupied()) {
 					if (Math.abs(map.getTile(x, y - 1).getDirt() - map.getTile(x, y).getDirt()) > 2) {
-						return null;
+						continue;
 					} else {
 						return new int[] { x, y - 1 };
 					}

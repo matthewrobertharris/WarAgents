@@ -90,4 +90,11 @@ public class TestDropDirt extends TestCase {
 		assertTrue( map.getTile(agent.getCurrentPos()).getDirt() == (prevDirt + newDirt));
 		assertEquals(outContent.toString(), error);
 	}	
+	
+	@Test
+	public void test_ToString() {
+		DropDirt output = new DropDirt();
+		String strOutput = "DROP_DIRT";
+		assertTrue(output.toString().equals(strOutput));
+	}
 }

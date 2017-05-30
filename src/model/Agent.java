@@ -53,7 +53,11 @@ public class Agent extends Thing {
 	}
 
 	public XY getPreviousXY() {
-		return getVisited().get(getVisited().size() - 1);
+		if (getVisited().size() < 2) {
+			return null;
+		} else {
+			return getVisited().get(getVisited().size() - 2);
+		}
 	}
 
 	public Action getPreviousAction() {
