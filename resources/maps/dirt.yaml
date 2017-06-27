@@ -1,0 +1,21 @@
+height: 5
+width: 5
+food: 
+  - [1, 1, 1, 1, 1]
+  - [1, 1, 1, 1, 1]
+  - [1, 1, 1, 1, 1]
+  - [1, 1, 1, 1, 1]
+  - [1, 1, 1, 1, 1]
+dirt: 
+  - [2, 2, 2, 2, 2]
+  - [2, 2, 2, 2, 2]
+  - [2, 2, 2, 2, 2]
+  - [2, 2, 2, 2, 2]
+  - [2, 2, 2, 2, 2]
+plants:
+  - [0, 1]
+  - [4, 4]       # list of plant positions, or a number for random placement (possibly with a placement strategy?)
+maxAgents: 10
+agentSlots:
+  - [0, 1]
+  - [4, 4]   # I assume this would need len == maxAgents
