@@ -5,7 +5,7 @@ import model.Map;
 
 public class LiftFood extends Action {
 
-	
+	@Override
 	public boolean action(Agent agent, Map map) {
 		int x = agent.getX();
 		int y = agent.getY();
