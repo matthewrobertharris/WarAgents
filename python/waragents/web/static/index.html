@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WarAgents</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1 class="wordmark">War<span>Agents</span></h1>
+    <form id="new-game" class="toolbar">
+      <label>Map
+        <select id="map-select"></select>
+      </label>
+      <label>Seed
+        <input id="seed" type="number" placeholder="random" min="0">
+      </label>
+      <button type="submit" class="primary">New game</button>
+      <button type="button" id="toggle-editor">Edit map</button>
+    </form>
+  </header>
+
+  <div id="error" class="banner error" hidden></div>
+
+  <section id="editor" class="card editor" hidden>
+    <div class="editor-main">
+      <div class="card-head">
+        <h2>Map file</h2>
+        <span class="hint">Edit the trees, then run. Uses the seed above.</span>
+      </div>
+      <textarea id="map-text" spellcheck="false" wrap="off"></textarea>
+      <div class="editor-actions">
+        <button id="run-text" class="primary">Run this map</button>
+        <span id="editor-error" class="error-text"></span>
+      </div>
+    </div>
+    <aside class="reference" id="reference"></aside>
+  </section>
+
+  <main class="layout">
+    <section class="card board">
+      <div class="controls">
+        <button id="play" class="primary" title="Space">Play</button>
+        <button id="step" title="Right arrow">Step</button>
+        <button id="step10">+10</button>
+        <label class="speed">Speed
+          <select id="speed">
+            <option value="1">1 turn/s</option>
+            <option value="2">2 turns/s</option>
+            <option value="5">5 turns/s</option>
+            <option value="10">10 turns/s</option>
+            <option value="25">25 turns/s</option>
+            <option value="100">100 turns/s</option>
+          </select>
+        </label>
+        <button id="reset">Reset</button>
+        <span id="status" class="status"></span>
+      </div>
+      <div id="outcome" class="banner outcome" hidden></div>
+      <div class="canvas-wrap">
+        <canvas id="board"></canvas>
+        <div id="tooltip" class="tooltip" hidden></div>
+      </div>
+      <div class="legend">
+        <span><i class="swatch dirt-low"></i><i class="swatch dirt-high"></i> height</span>
+        <span><i class="swatch food"></i> food</span>
+        <span><i class="swatch plant"></i> plant</span>
+        <span>ring = health</span>
+        <span>y = 0 is the bottom row, so UP moves up</span>
+      </div>
+    </section>
+
+    <aside class="side">
+      <section class="card">
+        <div class="card-head"><h2>Teams</h2><span id="criteria" class="hint"></span></div>
+        <div id="teams"></div>
+      </section>
+      <section class="card">
+        <div class="card-head"><h2>Agent</h2><span class="hint">Click an agent to inspect it</span></div>
+        <div id="agent"></div>
+      </section>
+      <section class="card">
+        <div class="card-head"><h2>Decision tree</h2><div id="tree-tabs" class="tabs"></div></div>
+        <div id="tree" class="tree"></div>
+      </section>
+      <section class="card">
+        <div class="card-head">
+          <h2>Events</h2>
+          <label class="hint"><input type="checkbox" id="show-fails"> failed actions</label>
+        </div>
+        <ol id="events" class="events" reversed></ol>
+      </section>
+    </aside>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -9,6 +9,10 @@ The author calls it a "0.5 player game". Once a simulation starts, you can't int
 shape the outcome beforehand by building the decision tree that every agent on your team
 follows.
 
+> **Python port in progress.** [`python/`](python/) contains a Python port of the engine and a
+> web app for playing and inspecting games in the browser. See [python/README.md](python/README.md)
+> to run it and for how it differs from the Java version. The Java code below is unchanged.
+
 ## Concept
 
 - A map is a grid of tiles. Each tile has a **height** (dirt) and an amount of **food**, and
@@ -107,8 +111,9 @@ src/
 test/          JUnit 4 tests for every output action and position type
 resources/
   maps/        Sample maps
-  test/        Fixture maps for the unit tests (outputMaps/, positionMaps/)
+  test/        Fixture maps for the unit tests (outputMaps/, positionMaps/), shared with python/
   readme/      Design notes (ideas.txt), ToDo list, tree-node spreadsheet, radial layout sketch
+python/        Python port of the engine plus a FastAPI web app (see python/README.md)
 ```
 
 ## Running
@@ -128,7 +133,9 @@ on Windows.
 
 ## State of play
 
-Development ran from March 2017 to January 2019 and hasn't been active since.
+Development of the Java version ran from March 2017 to January 2019. Work has now moved to the
+Python port in [`python/`](python/), which fixes a number of the Java bugs (listed in its
+README). The list below describes the Java code.
 
 **Working:**
 - The core simulation loop: speed ordering, agent updates, plant growth, per-turn history and
