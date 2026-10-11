@@ -3,6 +3,9 @@
 Ported from the Java classes model.Map, Tile, Agent, Player, Plant, Thing and XY.
 Coordinates follow the Java version: x grows to the right and y grows "up",
 so UP is (x, y + 1) and DOWN is (x, y - 1).
+
+A map doesn't have to be rectangular. Its grid can have holes (None instead of a Tile), and
+everything treats a hole like the edge of the map.
 """
 
 from __future__ import annotations
@@ -205,6 +208,7 @@ class Player:
         self.agent_power = agent_power
         self.trees = trees
         self.max_agents = max_agents
+        self.colour: str | None = None  # for display only
         self.agents: list[Agent] = []  # alive agents
         self.all_agents: list[Agent] = []  # every agent this player has had
 
@@ -231,12 +235,12 @@ class Event:
 class World:
     """The whole game state. The Java equivalent is model.Map."""
 
-    def __init__(self, width: int, height: int, tiles: list[list[Tile]], players: list[Player],
+    def __init__(self, width: int, height: int, tiles: list[list[Tile | None]], players: list[Player],
                  plants: list[Plant], criteria: list[Criterion], mode: str = "CLICK",
                  seed: int | None = None):
         self.width = width
         self.height = height
-        self.tiles = tiles  # indexed tiles[x][y]
+        self.tiles = tiles  # indexed tiles[x][y], None for a hole
         self.players = players
         self.plants = plants
         self.criteria = criteria
@@ -261,7 +265,9 @@ class World:
     # ---- geometry -------------------------------------------------------------
 
     def in_bounds(self, pos: XY) -> bool:
-        return 0 <= pos.x < self.width and 0 <= pos.y < self.height
+        """Is there a tile at pos? False off the edge of the grid and on holes."""
+        return (0 <= pos.x < self.width and 0 <= pos.y < self.height
+                and self.tiles[pos.x][pos.y] is not None)
 
     def tile(self, pos: XY) -> Tile:
         return self.tiles[pos.x][pos.y]

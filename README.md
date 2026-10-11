@@ -10,7 +10,8 @@ shape the outcome beforehand by building the decision tree that every agent on y
 follows.
 
 > **Python port in progress.** [`python/`](python/) contains a Python port of the engine and a
-> web app for playing and inspecting games in the browser. See [python/README.md](python/README.md)
+> Flask web app for setting up, playing and inspecting games in the browser. It stores maps,
+> trees, players and games as JSON in `python/catalogue/`. See [python/README.md](python/README.md)
 > to run it and for how it differs from the Java version. The Java code below is unchanged.
 
 ## Concept
@@ -113,7 +114,7 @@ resources/
   maps/        Sample maps
   test/        Fixture maps for the unit tests (outputMaps/, positionMaps/), shared with python/
   readme/      Design notes (ideas.txt), ToDo list, tree-node spreadsheet, radial layout sketch
-python/        Python port of the engine plus a FastAPI web app (see python/README.md)
+python/        Python port of the engine plus a Flask web app (see python/README.md)
 ```
 
 ## Running

@@ -344,9 +344,35 @@ def _find_birth_position(world: World, pos: XY) -> XY | None:
     return None
 
 
-# Actions that take no arguments, keyed by name. The parser handles the others.
+# Actions that take no arguments, keyed by name.
 SIMPLE_ACTIONS: dict[str, type[Action]] = {
     cls.activity.value: cls
     for cls in (ClearPrimary, ClearSecondary, Confused, Death, Defend, DropDirt, DropFood, Eat,
                 LiftDirt, LiftFood, Reproduce)
 }
+
+# The arguments each of the other actions takes, as in Input.args. MOVE_* and ATTACK_* take none.
+ACTION_ARGS: dict[str, tuple[str, ...]] = {
+    "CHANGE_TREE": ("name",),
+    "SET_PRIMARY": ("position",),
+    "SET_SECONDARY": ("position",),
+}
+
+
+def make_action(name: str, args: list) -> Action | None:
+    """Build the action called name from already-parsed args, or None if there's no such action."""
+    if name in SIMPLE_ACTIONS:
+        return SIMPLE_ACTIONS[name]()
+    prefix, _, direction = name.partition("_")
+    if direction in DIRECTIONS:
+        if prefix == "MOVE":
+            return Move(direction)
+        if prefix == "ATTACK":
+            return Attack(direction)
+    if name == "CHANGE_TREE":
+        return ChangeTree(*args)
+    if name == "SET_PRIMARY":
+        return SetPrimary(*args)
+    if name == "SET_SECONDARY":
+        return SetSecondary(*args)
+    return None

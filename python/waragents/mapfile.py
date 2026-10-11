@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from collections import deque
 
-from .actions import SIMPLE_ACTIONS, Action, Activity, Attack, ChangeTree, Move, SetPrimary, SetSecondary
+from .actions import ACTION_ARGS, Action, Activity, make_action
 from .criteria import (Annihilate, CollectFood, Criterion, FindThing, LevelUp, MapDirt,
                        PerformAction, SurviveTurns, TravelTo)
 from .inputs import INPUTS, Input
@@ -115,20 +115,16 @@ class _TreeParser:
 
     def action(self) -> Action:
         token = self.tokens.take("an action")
-        if token in SIMPLE_ACTIONS:
-            return SIMPLE_ACTIONS[token]()
-        prefix, _, direction = token.partition("_")
-        if prefix == "MOVE" and direction in ("LEFT", "RIGHT", "UP", "DOWN"):
-            return Move(direction)
-        if prefix == "ATTACK" and direction in ("LEFT", "RIGHT", "UP", "DOWN"):
-            return Attack(direction)
-        if token == "CHANGE_TREE":
-            return ChangeTree(self.tokens.take("a tree name for CHANGE_TREE"))
-        if token == "SET_PRIMARY":
-            return SetPrimary(self.position("SET_PRIMARY"))
-        if token == "SET_SECONDARY":
-            return SetSecondary(self.position("SET_SECONDARY"))
-        raise self.tokens.error(f"unknown action '{token}'")
+        args = []
+        for arg in ACTION_ARGS.get(token, ()):
+            if arg == "position":
+                args.append(self.position(token))
+            else:
+                args.append(self.tokens.take(f"a tree name for {token}"))
+        action = make_action(token, args)
+        if action is None:
+            raise self.tokens.error(f"unknown action '{token}'")
+        return action
 
     def input(self, node_kind: NodeKind, expected: str) -> Input:
         token = self.tokens.take(f"a {expected} input for a {node_kind.value} node")

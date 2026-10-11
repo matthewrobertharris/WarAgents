@@ -54,6 +54,11 @@ def event_to_dict(event: Event) -> dict[str, Any]:
     return {"time": event.time, "kind": event.kind, "message": event.message, "agent": event.agent}
 
 
+def _grid(world: World, attr: str) -> list[list[int | None]]:
+    return [[None if (tile := world.tiles[x][y]) is None else getattr(tile, attr)
+             for x in range(world.width)] for y in range(world.height)]
+
+
 def world_to_dict(world: World, include_trees: bool = True) -> dict[str, Any]:
     state: dict[str, Any] = {
         "time": world.time,
@@ -63,14 +68,15 @@ def world_to_dict(world: World, include_trees: bool = True) -> dict[str, Any]:
         "seed": world.seed,
         "finished": world.finished,
         "outcome": world.outcome,
-        # Row-major by y so the client can index tiles[y][x].
-        "dirt": [[world.tiles[x][y].dirt for x in range(world.width)] for y in range(world.height)],
-        "food": [[world.tiles[x][y].food for x in range(world.width)] for y in range(world.height)],
+        # Row-major by y so the client can index tiles[y][x]. None is a hole.
+        "dirt": _grid(world, "dirt"),
+        "food": _grid(world, "food"),
         "plants": [{"id": p.id, "x": p.pos.x, "y": p.pos.y, "rate": p.rate} for p in world.plants],
         "agents": [agent_to_dict(a) for a in world.agents],
         "players": [
             {
                 "name": p.name,
+                "colour": p.colour,
                 "alive": len(p.agents),
                 "total": len(p.all_agents),
                 "maxAgents": p.max_agents,

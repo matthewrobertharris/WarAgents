@@ -1,0 +1,36 @@
+{
+  "name": "Test Map",
+  "mode": "FIXED",
+  "maxAgents": 10,
+  "dirt": [
+    [null, null, null, 0, null, 0, null, null, null],
+    [null, null, 0, 0, null, 0, 0, null, null],
+    [null, 0, 0, 0, null, 0, 0, 0, null],
+    [0, 0, 0, 0, null, 0, 0, 0, 0],
+    [0, 0, 0, 0, null, 0, 0, 0, 0],
+    [0, 0, 0, 0, null, 0, 0, 0, 0],
+    [0, 0, 0, 0, null, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, null, 0, 0, 0, 0],
+    [null, 0, 0, 0, null, 0, 0, 0, null],
+    [null, null, 0, 0, null, 0, 0, null, null],
+    [null, null, null, 0, null, 0, null, null, null]
+  ],
+  "food": [
+    [null, null, null, 0, null, 0, null, null, null],
+    [null, null, 0, 0, null, 0, 0, null, null],
+    [null, 0, 0, 0, null, 0, 0, 0, null],
+    [0, 0, 0, 0, null, 0, 0, 0, 0],
+    [0, 0, 0, 0, null, 0, 0, 0, 0],
+    [0, 0, 0, 0, null, 0, 0, 0, 0],
+    [0, 0, 0, 0, null, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, null, 0, 0, 0, 0],
+    [null, 0, 0, 0, null, 0, 0, 0, null],
+    [null, null, 0, 0, null, 0, 0, null, null],
+    [null, null, null, 0, null, 0, null, null, null]
+  ],
+  "plants": [{"x": 4, "y": 7, "rate": 9}],
+  "starts": [{"slot": 1, "x": 4, "y": 7}, {"slot": 2, "x": 6, "y": 7}, {"slot": 3, "x": 6, "y": 5}],
+  "criteria": [{"type": "FIND_THING", "thing": "Plant0"}]
+}

@@ -1,0 +1,215 @@
+{
+  "name": "graze",
+  "owner": null,
+  "root": {
+    "kind": "POSITION",
+    "inputs": [{"name": "ENEMY_ADJACENT_POS"}],
+    "children": [
+      {"kind": "OUTPUT", "action": "ATTACK_LEFT"},
+      {"kind": "OUTPUT", "action": "ATTACK_RIGHT"},
+      {"kind": "OUTPUT", "action": "ATTACK_UP"},
+      {"kind": "OUTPUT", "action": "ATTACK_DOWN"},
+      {
+        "kind": "BOOLEAN",
+        "inputs": [{"name": "HAS_FOOD", "args": ["CURRENT"]}],
+        "children": [
+          {
+            "kind": "NUMERIC",
+            "inputs": [{"name": "SELF_HEALTH"}, {"name": "SELF_MAXHEALTH"}],
+            "children": [
+              {"kind": "OUTPUT", "action": "EAT"},
+              {
+                "kind": "BOOLEAN",
+                "inputs": [{"name": "REPRODUCE_LEGAL"}],
+                "children": [
+                  {
+                    "kind": "NUMERIC",
+                    "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [40]}],
+                    "children": [
+                      {"kind": "OUTPUT", "action": "REPRODUCE"},
+                      {
+                        "kind": "NUMERIC",
+                        "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [50]}],
+                        "children": [
+                          {
+                            "kind": "NUMERIC",
+                            "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [50]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                              {"kind": "OUTPUT", "action": "MOVE_UP"},
+                              {"kind": "OUTPUT", "action": "MOVE_UP"}
+                            ]
+                          },
+                          {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                          {
+                            "kind": "NUMERIC",
+                            "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [50]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                              {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                              {"kind": "OUTPUT", "action": "MOVE_DOWN"}
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "NUMERIC",
+                        "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [50]}],
+                        "children": [
+                          {
+                            "kind": "NUMERIC",
+                            "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [50]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                              {"kind": "OUTPUT", "action": "MOVE_UP"},
+                              {"kind": "OUTPUT", "action": "MOVE_UP"}
+                            ]
+                          },
+                          {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                          {
+                            "kind": "NUMERIC",
+                            "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [50]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                              {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                              {"kind": "OUTPUT", "action": "MOVE_DOWN"}
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "NUMERIC",
+                    "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [50]}],
+                    "children": [
+                      {
+                        "kind": "NUMERIC",
+                        "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [50]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                          {"kind": "OUTPUT", "action": "MOVE_UP"},
+                          {"kind": "OUTPUT", "action": "MOVE_UP"}
+                        ]
+                      },
+                      {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                      {
+                        "kind": "NUMERIC",
+                        "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [50]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                          {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                          {"kind": "OUTPUT", "action": "MOVE_DOWN"}
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {"kind": "OUTPUT", "action": "DEFEND"}
+            ]
+          },
+          {
+            "kind": "NUMERIC",
+            "inputs": [{"name": "TEAM_SIZE"}, {"name": "VALUE", "args": [6]}],
+            "children": [
+              {
+                "kind": "NUMERIC",
+                "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [55]}],
+                "children": [
+                  {
+                    "kind": "POSITION",
+                    "inputs": [{"name": "DIRECTION_TO", "args": [{"x": 3, "y": 3}]}],
+                    "children": [
+                      {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                      {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                      {"kind": "OUTPUT", "action": "MOVE_UP"},
+                      {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                      {
+                        "kind": "NUMERIC",
+                        "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [50]}],
+                        "children": [
+                          {
+                            "kind": "NUMERIC",
+                            "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [50]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                              {"kind": "OUTPUT", "action": "MOVE_UP"},
+                              {"kind": "OUTPUT", "action": "MOVE_UP"}
+                            ]
+                          },
+                          {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                          {
+                            "kind": "NUMERIC",
+                            "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [50]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                              {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                              {"kind": "OUTPUT", "action": "MOVE_DOWN"}
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "NUMERIC",
+                    "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [50]}],
+                    "children": [
+                      {
+                        "kind": "NUMERIC",
+                        "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [50]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                          {"kind": "OUTPUT", "action": "MOVE_UP"},
+                          {"kind": "OUTPUT", "action": "MOVE_UP"}
+                        ]
+                      },
+                      {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                      {
+                        "kind": "NUMERIC",
+                        "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [50]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                          {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                          {"kind": "OUTPUT", "action": "MOVE_DOWN"}
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "NUMERIC",
+                    "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [50]}],
+                    "children": [
+                      {
+                        "kind": "NUMERIC",
+                        "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [50]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                          {"kind": "OUTPUT", "action": "MOVE_UP"},
+                          {"kind": "OUTPUT", "action": "MOVE_UP"}
+                        ]
+                      },
+                      {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                      {
+                        "kind": "NUMERIC",
+                        "inputs": [{"name": "RANDOM"}, {"name": "VALUE", "args": [50]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                          {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                          {"kind": "OUTPUT", "action": "MOVE_DOWN"}
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {"kind": "OUTPUT", "action": "CHANGE_TREE", "args": ["guard"]},
+              {"kind": "OUTPUT", "action": "CHANGE_TREE", "args": ["guard"]}
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
