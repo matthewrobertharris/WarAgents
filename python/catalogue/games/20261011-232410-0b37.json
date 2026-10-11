@@ -1,0 +1,214 @@
+{
+  "name": "Training: Corridor",
+  "created": "2026-10-11T23:24:10",
+  "mode": "training",
+  "seed": 572627,
+  "mapId": null,
+  "map": {
+    "name": "Corridor",
+    "mode": "CLICK",
+    "maxAgents": 10,
+    "dirt": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, null, null, null, null, null, null, 0, null, 0],
+      [0, 0, 0, 0, 0, null, null, 0, null, 0],
+      [null, null, null, null, 0, 0, null, 0, null, 0],
+      [0, 0, 0, null, null, 0, null, 0, null, 0],
+      [0, null, 0, null, null, 0, null, 0, null, 0],
+      [0, null, 0, 0, null, 0, null, 0, null, 0],
+      [0, null, null, 0, null, 0, null, 0, null, 0],
+      [0, null, null, 0, null, 0, null, 0, null, 0],
+      [0, null, null, 0, 0, 0, null, 0, null, 0]
+    ],
+    "food": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, null, null, null, null, null, null, 0, null, 0],
+      [0, 0, 0, 0, 0, null, null, 0, null, 0],
+      [null, null, null, null, 0, 0, null, 0, null, 0],
+      [0, 0, 0, null, null, 0, null, 0, null, 0],
+      [0, null, 0, null, null, 0, null, 0, null, 0],
+      [0, null, 0, 0, null, 0, null, 0, null, 0],
+      [0, null, null, 0, null, 0, null, 0, null, 0],
+      [0, null, null, 0, null, 0, null, 0, null, 0],
+      [0, null, null, 0, 0, 0, null, 0, null, 0]
+    ],
+    "plants": [],
+    "starts": [{"slot": 1, "x": 0, "y": 9}],
+    "criteria": [{"type": "TRAVEL_TO", "slot": 1, "x": 9, "y": 0}]
+  },
+  "teams": [
+    {
+      "slot": 1,
+      "name": "Matt",
+      "colour": "#1c7ed6",
+      "player": "matt",
+      "speed": 10,
+      "health": 100,
+      "power": 10,
+      "startTree": "tut-movement-5",
+      "trees": [
+        {
+          "name": "tut-movement-5",
+          "owner": "matt",
+          "root": {
+            "kind": "BOOLEAN",
+            "inputs": [{"name": "VALID_POSITION", "args": ["PREVIOUS"]}],
+            "children": [
+              {
+                "kind": "POSITION",
+                "inputs": [{"name": "DIRECTION_TO", "args": ["PREVIOUS"]}],
+                "children": [
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "VALID_POSITION", "args": ["RIGHT"]}],
+                    "children": [
+                      {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "VALID_POSITION", "args": ["UP"]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_UP"},
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "VALID_POSITION", "args": ["DOWN"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                              {"kind": "OUTPUT", "action": "CONFUSED"}
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "VALID_POSITION", "args": ["LEFT"]}],
+                    "children": [
+                      {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "VALID_POSITION", "args": ["UP"]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_UP"},
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "VALID_POSITION", "args": ["DOWN"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                              {"kind": "OUTPUT", "action": "CONFUSED"}
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "VALID_POSITION", "args": ["LEFT"]}],
+                    "children": [
+                      {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "VALID_POSITION", "args": ["RIGHT"]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "VALID_POSITION", "args": ["DOWN"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                              {"kind": "OUTPUT", "action": "CONFUSED"}
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "VALID_POSITION", "args": ["LEFT"]}],
+                    "children": [
+                      {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "VALID_POSITION", "args": ["UP"]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_UP"},
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "VALID_POSITION", "args": ["RIGHT"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                              {"kind": "OUTPUT", "action": "CONFUSED"}
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "VALID_POSITION", "args": ["LEFT"]}],
+                    "children": [
+                      {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "VALID_POSITION", "args": ["UP"]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_UP"},
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "VALID_POSITION", "args": ["DOWN"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                              {"kind": "OUTPUT", "action": "CONFUSED"}
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "kind": "BOOLEAN",
+                "inputs": [{"name": "VALID_POSITION", "args": ["LEFT"]}],
+                "children": [
+                  {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "VALID_POSITION", "args": ["RIGHT"]}],
+                    "children": [
+                      {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "VALID_POSITION", "args": ["DOWN"]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "VALID_POSITION", "args": ["UP"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_UP"},
+                              {"kind": "OUTPUT", "action": "CONFUSED"}
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "criteria": [{"type": "TRAVEL_TO", "slot": 1, "x": 9, "y": 0}],
+  "maxTurns": 120,
+  "rules": 1,
+  "createdBy": "matt",
+  "participants": ["matt"],
+  "tutorialId": "movement-5"
+}

@@ -1,0 +1,79 @@
+{
+  "name": "Defend",
+  "track": "Combat",
+  "order": 1,
+  "level": "Beginner",
+  "maxTurns": 10,
+  "brief": "Other teams are enemies. An attack takes the attacker's power off the defender's health, but an agent that chose DEFEND this turn takes only half. Four raiders surround your agent, and together they're strong enough to kill it in a few turns unless it defends.",
+  "goal": "Survive 5 turns.",
+  "hints": ["Sometimes doing nothing, carefully, is the best move."],
+  "concepts": ["DEFEND"],
+  "map": {
+    "name": "Defend",
+    "mode": "CLICK",
+    "maxAgents": 10,
+    "dirt": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "food": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "plants": [],
+    "starts": [
+      {"slot": 1, "x": 4, "y": 5},
+      {"slot": 2, "x": 4, "y": 6},
+      {"slot": 2, "x": 3, "y": 5},
+      {"slot": 2, "x": 5, "y": 5},
+      {"slot": 2, "x": 4, "y": 4}
+    ],
+    "criteria": [{"type": "SURVIVE_TURNS", "turns": 5}]
+  },
+  "team": {"speed": 20},
+  "bots": [
+    {
+      "slot": 2,
+      "name": "Raiders",
+      "power": 8,
+      "health": 100,
+      "speed": 10,
+      "trees": [
+        {
+          "name": "raider",
+          "owner": null,
+          "root": {
+            "kind": "POSITION",
+            "inputs": [{"name": "ENEMY_ADJACENT_POS", "args": []}],
+            "children": [
+              {"kind": "OUTPUT", "action": "ATTACK_LEFT"},
+              {"kind": "OUTPUT", "action": "ATTACK_RIGHT"},
+              {"kind": "OUTPUT", "action": "ATTACK_UP"},
+              {"kind": "OUTPUT", "action": "ATTACK_DOWN"},
+              {"kind": "OUTPUT", "action": "DEFEND"}
+            ]
+          }
+        }
+      ],
+      "startTree": "raider"
+    }
+  ],
+  "solution": {"name": "defend", "owner": null, "root": {"kind": "OUTPUT", "action": "DEFEND"}},
+  "recommendedAfter": []
+}

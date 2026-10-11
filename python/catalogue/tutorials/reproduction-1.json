@@ -1,0 +1,45 @@
+{
+  "name": "Reproduce",
+  "track": "Reproduction",
+  "order": 1,
+  "level": "Beginner",
+  "maxTurns": 10,
+  "brief": "An agent can REPRODUCE: it splits in two, and the new agent appears on a free tile next to it. Each keeps half the health, and the new agent follows the same tree from the next turn. A team can only have so many agents at once.",
+  "goal": "Have 2 agents.",
+  "hints": ["One DO node is enough."],
+  "concepts": ["REPRODUCE", "TEAM_SIZE"],
+  "map": {
+    "name": "Reproduce",
+    "mode": "CLICK",
+    "maxAgents": 10,
+    "dirt": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "food": [
+      [50, 50, 50, 50, 50, 50, 50, 50, 50, 50],
+      [50, 50, 50, 50, 50, 50, 50, 50, 50, 50],
+      [50, 50, 50, 50, 50, 50, 50, 50, 50, 50],
+      [50, 50, 50, 50, 50, 50, 50, 50, 50, 50],
+      [50, 50, 50, 50, 50, 50, 50, 50, 50, 50],
+      [50, 50, 50, 50, 50, 50, 50, 50, 50, 50],
+      [50, 50, 50, 50, 50, 50, 50, 50, 50, 50],
+      [50, 50, 50, 50, 50, 50, 50, 50, 50, 50],
+      [50, 50, 50, 50, 50, 50, 50, 50, 50, 50],
+      [50, 50, 50, 50, 50, 50, 50, 50, 50, 50]
+    ],
+    "plants": [],
+    "starts": [{"slot": 1, "x": 1, "y": 5}],
+    "criteria": [{"type": "TEAM_SIZE", "slot": 1, "size": 2}]
+  },
+  "solution": {"name": "reproduce", "owner": null, "root": {"kind": "OUTPUT", "action": "REPRODUCE"}},
+  "recommendedAfter": []
+}

@@ -9,6 +9,10 @@ export async function api(path, { method = "GET", body } = {}) {
   }
   const res = await fetch(path, options);
   const data = await res.json().catch(() => ({}));
+  if (res.status === 401 && !path.startsWith("/api/auth/") && !location.hash.startsWith("#/login")) {
+    // Signed out, perhaps in another tab: sign in again and come back.
+    location.hash = `#/login?next=${encodeURIComponent(location.hash || "#/")}`;
+  }
   if (!res.ok) {
     const error = new Error(data.detail || res.statusText);
     error.problems = data.problems ?? [];

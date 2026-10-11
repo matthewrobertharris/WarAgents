@@ -1,0 +1,53 @@
+{
+  "name": "Into the corner",
+  "track": "Movement",
+  "order": 2,
+  "level": "Beginner",
+  "maxTurns": 30,
+  "recommendedAfter": ["movement-1"],
+  "brief": "A tree can ask a question and do different things depending on the answer. A BOOLEAN node asks a yes/no question and has a branch for each answer. IN_BOUNDS asks whether a position is on the map.",
+  "goal": "Reach the top-right corner, x=9, y=9.",
+  "hints": ["Move right while you can, then move up.", "Ask IN_BOUNDS RIGHT: if yes, MOVE_RIGHT; if no, MOVE_UP."],
+  "concepts": ["IN_BOUNDS", "MOVE_UP"],
+  "map": {
+    "name": "Into the corner",
+    "mode": "CLICK",
+    "maxAgents": 10,
+    "dirt": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "food": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "plants": [],
+    "starts": [{"slot": 1, "x": 1, "y": 5}],
+    "criteria": [{"type": "TRAVEL_TO", "slot": 1, "x": 9, "y": 9}]
+  },
+  "solution": {
+    "name": "into-the-corner",
+    "owner": null,
+    "root": {
+      "kind": "BOOLEAN",
+      "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+      "children": [{"kind": "OUTPUT", "action": "MOVE_RIGHT"}, {"kind": "OUTPUT", "action": "MOVE_UP"}]
+    }
+  }
+}

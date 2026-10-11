@@ -5,16 +5,27 @@
       trees/graze.json
       players/matthew.json
       games/20261002-140301-3f9a.json
+      results/20261002-140301-3f9a.json
 
 An item's id is its file name. A new item's id is made from its name, and renaming the item later
 keeps the id. scenario.py describes what's in each kind of file.
 
-A player is a person, not a team, like an account:
-{"name": "Matthew", "colour": "#1c7ed6", "created": "2026-10-03T09:30:00", "startTree": "graze"}.
-startTree is the name of the tree their teams start with unless another is chosen; like
-CHANGE_TREE, it's looked up in their own trees and then the defaults. A tree with an owner
-belongs to that player. A tree with no owner is a default tree, which every player can use. When
-a team switches trees with CHANGE_TREE, it looks in its player's trees first, then the defaults.
+A player is an account, and its id is the username:
+{"name": "Matthew", "colour": "#1c7ed6", "created": "2026-10-03T09:30:00", "startTree": "graze",
+ "xp": 350, "passwordHash": "...", "admin": true}.
+xp is their account XP, which sets their level and so their tree budget (progression.py).
+startTree is their default tree: the one their teams start with unless another is chosen, and the
+one that plays for them when someone else picks them as an opponent. Like CHANGE_TREE, it's looked
+up in their own trees and then the defaults. passwordHash and admin are managed by web/auth.py.
+
+A tree with an owner belongs to that player. A tree with no owner is a default tree, which every
+player can use. When a team switches trees with CHANGE_TREE, it looks in its player's trees first,
+then the defaults. Maps have an owner too (null for a system map) and can be published, which
+lets every player use them.
+
+A game's result is saved next to it, under the same id, once the game is over: who placed where
+and the XP each player got for it (battles.py). It's kept apart from the game record because the
+record is what replays the game, and must never change.
 """
 
 from __future__ import annotations
@@ -27,10 +38,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .scenario import (ScenarioError, check_game, check_map, check_tree, import_map_text,
-                       rename_trees, tree_references)
+from .progression import DEFAULT_MAX_TURNS
+from .scenario import (RULES_VERSION, ScenarioError, check_game, check_map, check_tree,
+                       import_map_text, rename_trees, tree_references)
 
-KINDS = ("maps", "trees", "players", "games")
+KINDS = ("maps", "trees", "players", "games", "results", "tutorials", "seasons")
+GAME_MODES = ("sandbox", "training", "skirmish", "season")
 _ID = re.compile(r"[a-z0-9][a-z0-9-]{0,79}")
 _COLOUR = re.compile(r"#[0-9a-fA-F]{6}")
 DEFAULT_STATS = {"speed": 10, "health": 100, "power": 10}
@@ -124,12 +137,21 @@ class Catalogue:
     # ---- checked changes -----------------------------------------------------------
 
     def create(self, kind: str, data: dict[str, Any]) -> str:
-        if kind == "games":
-            raise CatalogueError(["Games are created by starting a new game"])
+        """Save a new item with an id made from its name. Returns the id."""
+        return self.create_with_id(kind, None, data)
+
+    def create_with_id(self, kind: str, item_id: str | None, data: dict[str, Any]) -> str:
+        """Save a new item as item_id (or an id made from its name), which mustn't be taken."""
+        if kind in ("games", "results"):
+            raise CatalogueError(["Games and their results are saved by playing a game"])
         self._check(kind, data, None)
         if kind == "players" and not data.get("created"):
             data = {**data, "created": datetime.now().isoformat(timespec="seconds")}
-        item_id = self.new_id(kind, str(data.get("name", "")))
+        if item_id is None:
+            item_id = self.new_id(kind, str(data.get("name", "")))
+        elif self.exists(kind, item_id):
+            raise CatalogueError([f"There's already a {kind[:-1]} called '{item_id}'"])
+        self._path(kind, item_id)  # checks the id is allowed
         self._write(kind, item_id, data)
         return item_id
 
@@ -149,6 +171,8 @@ class Catalogue:
                 raise CatalogueError([f"This player still owns {len(owned)} tree(s): "
                                       f"{', '.join(owned)}. Delete or move them first."])
         path.unlink()
+        if kind == "games" and self.exists("results", item_id):
+            self._path("results", item_id).unlink()
 
     def _check(self, kind: str, data: Any, item_id: str | None) -> None:
         if not isinstance(data, dict):
@@ -156,6 +180,11 @@ class Catalogue:
         problems: list = []
         if kind == "maps":
             problems = check_map(data, allow_unfinished=True)
+            owner = data.get("owner")
+            if owner is not None and not self.exists("players", owner):
+                problems.append(f"the owner '{owner}' isn't a player in the catalogue")
+            if not isinstance(data.get("published", False), bool):
+                problems.append("published must be true or false")
         elif kind == "trees":
             problems = check_tree(data, allow_empty=True)
             owner = data.get("owner")
@@ -175,8 +204,25 @@ class Catalogue:
                 problems.append("startTree must be a tree name")
             if data.get("created") is not None and not isinstance(data["created"], str):
                 problems.append("created must be a date like 2026-10-03T09:30:00")
+            if data.get("passwordHash") is not None and not isinstance(data["passwordHash"], str):
+                problems.append("passwordHash must be a string")
+            if not isinstance(data.get("admin", False), bool):
+                problems.append("admin must be true or false")
+            xp = data.get("xp", 0)
+            if not isinstance(xp, int) or isinstance(xp, bool) or xp < 0:
+                problems.append("xp must be a whole number of at least 0")
+            if not isinstance(data.get("training", {}), dict):
+                problems.append("training must be an object of completed tutorials")
         elif kind == "games":
             problems = check_game(data)
+        elif kind == "results":
+            problems = [] if isinstance(data.get("placements"), list) else ["a result needs its placements"]
+        elif kind == "tutorials":
+            from .training import check_tutorial
+            problems = check_tutorial(data)
+        elif kind == "seasons":
+            from .seasons import check_season
+            problems = check_season(data)
         if problems:
             raise CatalogueError(problems)
 
@@ -191,12 +237,20 @@ class Catalogue:
                               if t.get("owner") == player_id and "error" not in t})
         return available
 
-    def new_game(self, map_id: str, teams: list[dict[str, Any]], seed: int,
-                 name: str | None = None) -> tuple[str, dict[str, Any]]:
-        """Save a new game record. Each team request has slot, player, tree (a tree id), name,
-        colour, speed, health and power. Everything but slot has a default: a team with a
-        player and no tree starts with the player's startTree."""
-        map_data = self.get("maps", map_id)
+    def new_game(self, map_id: str | dict[str, Any], teams: list[dict[str, Any]], seed: int,
+                 name: str | None = None, created_by: str | None = None, mode: str = "sandbox",
+                 extra: dict[str, Any] | None = None) -> tuple[str, dict[str, Any]]:
+        """Save a new game record. map_id is a map in the catalogue, or a map itself (such as a
+        generated one). Each team request has slot, player, tree (a tree id), name, colour,
+        speed, health and power. Everything but slot has a default: a team with a player and no
+        tree starts with the player's startTree. created_by is the player who started the game,
+        mode is one of GAME_MODES, and extra adds fields such as tutorialId."""
+        if mode not in GAME_MODES:
+            raise CatalogueError([f"mode must be one of {', '.join(GAME_MODES)}"])
+        if isinstance(map_id, dict):
+            map_data, map_id = map_id, None
+        else:
+            map_data = self.get("maps", map_id)
         if not isinstance(teams, list) or not teams:
             raise CatalogueError(["Choose at least one team"])
         built = [self._team(n, request) for n, request in enumerate(teams)]
@@ -211,11 +265,18 @@ class Catalogue:
         game = {
             "name": name or f"{map_data.get('name', map_id)} · {now:%d %b %H:%M}",
             "created": now.isoformat(timespec="seconds"),
+            "mode": mode,
             "seed": seed,
             "mapId": map_id,
             "map": map_data,
             "teams": built,
             "criteria": criteria,
+            "maxTurns": DEFAULT_MAX_TURNS,
+            "rules": RULES_VERSION,
+            "createdBy": created_by,
+            # Everyone with a team, so each of them finds the game in their history.
+            "participants": sorted({t["player"] for t in built if t["player"]}),
+            **(extra or {}),
         }
         problems = check_game(game)
         if problems:
@@ -223,6 +284,18 @@ class Catalogue:
         game_id = f"{now:%Y%m%d-%H%M%S}-{secrets.token_hex(2)}"
         self._write("games", game_id, game)
         return game_id, game
+
+    def save_result(self, game_id: str, result: dict[str, Any]) -> None:
+        """Save a finished game's result. A game only ever gets one."""
+        if not self.exists("games", game_id):
+            raise NotFound(f"No game called '{game_id}'")
+        if self.exists("results", game_id):
+            raise CatalogueError([f"Game '{game_id}' already has a result"])
+        self._check("results", result, game_id)
+        self._write("results", game_id, result)
+
+    def result(self, game_id: str) -> dict[str, Any] | None:
+        return self.get("results", game_id) if self.exists("results", game_id) else None
 
     def _team(self, n: int, request: Any) -> dict[str, Any]:
         if not isinstance(request, dict):
@@ -234,6 +307,9 @@ class Catalogue:
                 raise CatalogueError([f"Team {n + 1}'s player '{player_id}' isn't in the catalogue"])
             player = self.get("players", player_id)
 
+        if isinstance(request.get("trees"), list):
+            # A team that brings its own trees, such as a tutorial's practice opponents.
+            return self._team_with_trees(n, request, player_id, player)
         available = self.trees_for(player_id)
         if request.get("tree") is None and player and player.get("startTree") in available:
             start = available[player["startTree"]]
@@ -262,10 +338,29 @@ class Catalogue:
             "player": player_id,
             **{stat: value if request.get(stat) is None else request[stat]
                for stat, value in DEFAULT_STATS.items()},
+            **({"startHealth": request["startHealth"]} if request.get("startHealth") is not None else {}),
             "startTree": start["name"],
             "trees": list(trees.values()),
         }
         return team
+
+    def _team_with_trees(self, n: int, request: dict[str, Any], player_id: str | None,
+                         player: dict[str, Any] | None) -> dict[str, Any]:
+        name = request.get("name")
+        if not isinstance(name, str) or not name.strip():
+            name = player["name"] if player else f"Team {n + 1}"
+        trees = [{k: v for k, v in t.items() if k != "id"} for t in request["trees"] if isinstance(t, dict)]
+        return {
+            "slot": request.get("slot"),
+            "name": name.strip(),
+            "colour": request.get("colour") or (player or {}).get("colour"),
+            "player": player_id,
+            **{stat: value if request.get(stat) is None else request[stat]
+               for stat, value in DEFAULT_STATS.items()},
+            **({"startHealth": request["startHealth"]} if request.get("startHealth") is not None else {}),
+            "startTree": request.get("startTree") or (trees[0]["name"] if trees else None),
+            "trees": trees,
+        }
 
     def import_map(self, text: str, name: str, owner: str | None = None) -> dict[str, Any]:
         """Add a .map file's map, and its teams' trees owned by owner, to the catalogue.

@@ -1,0 +1,116 @@
+{
+  "name": "Training: The U-bend",
+  "created": "2026-10-11T23:55:32",
+  "mode": "training",
+  "seed": 360326,
+  "mapId": null,
+  "map": {
+    "name": "The U-bend",
+    "mode": "CLICK",
+    "maxAgents": 10,
+    "dirt": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, null, null, null, null, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, null, null, null, null, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "food": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, null, null, null, null, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, null, null, null, null, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "plants": [],
+    "starts": [{"slot": 1, "x": 1, "y": 5}],
+    "criteria": [{"type": "TRAVEL_TO", "slot": 1, "x": 6, "y": 5}]
+  },
+  "teams": [
+    {
+      "slot": 1,
+      "name": "Matt",
+      "colour": "#1c7ed6",
+      "player": "matt",
+      "speed": 10,
+      "health": 100,
+      "power": 10,
+      "startTree": "tut-movement-6",
+      "trees": [
+        {
+          "name": "tut-movement-6",
+          "owner": "matt",
+          "root": {
+            "kind": "BOOLEAN",
+            "inputs": [{"name": "VALID_POSITION", "args": ["SECONDARY"]}],
+            "children": [
+              {"kind": "OUTPUT", "action": "CHANGE_TREE", "args": ["tut-movement-6"]},
+              {
+                "kind": "BOOLEAN",
+                "inputs": [{"name": "VALID_POSITION", "args": ["PRIMARY"]}],
+                "children": [
+                  {
+                    "kind": "POSITION",
+                    "inputs": [{"name": "DIRECTION_TO", "args": ["PRIMARY"]}],
+                    "children": [
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "VALID_POSITION", "args": ["LEFT"]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                          {"kind": "OUTPUT", "action": "SET_SECONDARY", "args": ["CURRENT"]}
+                        ]
+                      },
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "VALID_POSITION", "args": ["RIGHT"]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                          {"kind": "OUTPUT", "action": "SET_SECONDARY", "args": ["CURRENT"]}
+                        ]
+                      },
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "VALID_POSITION", "args": ["UP"]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_UP"},
+                          {"kind": "OUTPUT", "action": "SET_SECONDARY", "args": ["CURRENT"]}
+                        ]
+                      },
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "VALID_POSITION", "args": ["DOWN"]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                          {"kind": "OUTPUT", "action": "SET_SECONDARY", "args": ["CURRENT"]}
+                        ]
+                      },
+                      {"kind": "OUTPUT", "action": "CONFUSED"}
+                    ]
+                  },
+                  {"kind": "OUTPUT", "action": "SET_PRIMARY", "args": [{"x": 6, "y": 0}]}
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "criteria": [{"type": "TRAVEL_TO", "slot": 1, "x": 6, "y": 5}],
+  "maxTurns": 150,
+  "rules": 1,
+  "createdBy": "matt",
+  "participants": ["matt"],
+  "tutorialId": "movement-6"
+}

@@ -1,13 +1,14 @@
 """Win conditions that end a game. Ported from model.criteria.
 
 The game ends as soon as any criterion is met. A criterion can also raise GameOver to end the
-game as a loss (for example, the player being annihilated).
+game as a loss (for example, the player being annihilated). winners() says which teams won, so the
+game's result can record it.
 """
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .actions import Activity
 from .world import XY, Agent, Plant, Player, World
@@ -27,6 +28,37 @@ class Criterion(ABC):
     def describe_win(self, world: World) -> str:
         return f"Criteria met: {self.source()}"
 
+    def winners(self, world: World) -> list[Player]:
+        """The teams that won when this criterion was met. By default, every team still in."""
+        return [p for p in world.players if p.agents]
+
+
+class _TeamCriterion(Criterion):
+    """A criterion one team meets, so that team is the winner."""
+
+    player: Player
+
+    def winners(self, world: World) -> list[Player]:
+        return [self.player]
+
+
+class _HistoryCounter:
+    """Adds up something from the team's agent histories, reading each snapshot only once."""
+
+    def __init__(self, count):
+        self.count = count  # count(before, after) for each pair of snapshots
+        self.total = 0
+        self.seen: dict[int, int] = {}
+
+    def update(self, player: Player) -> int:
+        for agent in player.all_agents:
+            start = self.seen.get(id(agent), 0)
+            history = agent.history
+            for n in range(max(start, 1), len(history)):
+                self.total += self.count(history[n - 1], history[n])
+            self.seen[id(agent)] = len(history)
+        return self.total
+
 
 @dataclass
 class SurviveTurns(Criterion):
@@ -43,13 +75,19 @@ class SurviveTurns(Criterion):
 
 
 @dataclass
-class Annihilate(Criterion):
-    """The player wins when every other player has no agents, and loses if it has none."""
+class Annihilate(_TeamCriterion):
+    """The player wins when every other player has no agents, and loses if it has none.
+
+    With three or more teams, losing your agents knocks you out but the game goes on until one
+    team is left.
+    """
 
     player: Player
 
     def is_finished(self, world: World) -> bool:
         if not self.player.agents:
+            if sum(1 for p in world.players if p.agents) > 1:
+                return False
             raise GameOver(f"Game over: {self.player.name} has no agents left")
         return all(not p.agents for p in world.players if p is not self.player)
 
@@ -61,18 +99,17 @@ class Annihilate(Criterion):
 
 
 @dataclass
-class CollectFood(Criterion):
+class CollectFood(_TeamCriterion):
     """The player's agents have picked up at least this much food in total."""
 
     player: Player
     total: int
+    _counter: _HistoryCounter = field(
+        default_factory=lambda: _HistoryCounter(lambda before, after: max(0, after.food - before.food)),
+        init=False, repr=False, compare=False)
 
     def collected(self) -> int:
-        total = 0
-        for agent in self.player.all_agents:
-            for before, after in zip(agent.history, agent.history[1:]):
-                total += max(0, after.food - before.food)
-        return total
+        return self._counter.update(self.player)
 
     def is_finished(self, world: World) -> bool:
         return self.collected() >= self.total
@@ -85,7 +122,48 @@ class CollectFood(Criterion):
 
 
 @dataclass
-class LevelUp(Criterion):
+class EatFood(_TeamCriterion):
+    """The player's agents have eaten at least this much food in total (health gained by EAT)."""
+
+    player: Player
+    amount: int
+    _counter: _HistoryCounter = field(
+        default_factory=lambda: _HistoryCounter(
+            lambda before, after: max(0, after.health - before.health) if after.action == "EAT" else 0),
+        init=False, repr=False, compare=False)
+
+    def eaten(self) -> int:
+        return self._counter.update(self.player)
+
+    def is_finished(self, world: World) -> bool:
+        return self.eaten() >= self.amount
+
+    def source(self) -> str:
+        return f"EAT_FOOD {self.player.name} {self.amount}"
+
+    def describe_win(self, world: World) -> str:
+        return f"{self.player.name} ate {self.amount} food"
+
+
+@dataclass
+class TeamSize(_TeamCriterion):
+    """The player has at least this many agents alive at once."""
+
+    player: Player
+    size: int
+
+    def is_finished(self, world: World) -> bool:
+        return len(self.player.agents) >= self.size
+
+    def source(self) -> str:
+        return f"TEAM_SIZE {self.player.name} {self.size}"
+
+    def describe_win(self, world: World) -> str:
+        return f"{self.player.name} has {self.size} agents"
+
+
+@dataclass
+class LevelUp(_TeamCriterion):
     player: Player
     exp: int
 
@@ -111,7 +189,7 @@ class MapDirt(Criterion):
 
 
 @dataclass
-class TravelTo(Criterion):
+class TravelTo(_TeamCriterion):
     player: Player
     position: XY
 
@@ -126,14 +204,17 @@ class TravelTo(Criterion):
 
 
 @dataclass
-class PerformAction(Criterion):
+class PerformAction(_TeamCriterion):
     player: Player
     activity: Activity
     times: int
+    _counter: _HistoryCounter | None = field(default=None, init=False, repr=False, compare=False)
 
     def count(self) -> int:
-        return sum(1 for a in self.player.all_agents for s in a.history
-                   if s.action == self.activity.value)
+        if self._counter is None:
+            name = self.activity.value
+            self._counter = _HistoryCounter(lambda before, after: int(after.action == name))
+        return self._counter.update(self.player)
 
     def is_finished(self, world: World) -> bool:
         return self.count() >= self.times
@@ -165,3 +246,6 @@ class FindThing(Criterion):
 
     def describe_win(self, world: World) -> str:
         return f"{self.winner.player.name} found {self.thing.id}"
+
+    def winners(self, world: World) -> list[Player]:
+        return [self.winner.player]

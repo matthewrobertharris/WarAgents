@@ -1,0 +1,89 @@
+{
+  "name": "Bridge the gap",
+  "track": "Dirt",
+  "order": 2,
+  "level": "Intermediate",
+  "maxTurns": 40,
+  "recommendedAfter": ["dirt-1"],
+  "brief": "A trench 3 deep cuts the map in two, too deep to climb in or out of. You can't drop dirt into a tile you're not on, but you can lower the edge you're standing on, step down into the trench, and drop the dirt there to build a step out the other side.",
+  "goal": "Cross the trench to the flag at x=8, y=5.",
+  "hints": ["Not carrying dirt and the tile to your right is the trench (height 0)? If your own tile is higher than 2, LIFT_DIRT; otherwise step right.", "Carrying dirt: step right if the tile there is lower than yours. In the trench, with the far side higher, DROP_DIRT."],
+  "concepts": ["DROP_DIRT", "SELF_DIRT", "DIRT_VALUE"],
+  "map": {
+    "name": "Bridge the gap",
+    "mode": "CLICK",
+    "maxAgents": 10,
+    "dirt": [
+      [3, 3, 3, 3, 0, 3, 3, 3, 3, 3],
+      [3, 3, 3, 3, 0, 3, 3, 3, 3, 3],
+      [3, 3, 3, 3, 0, 3, 3, 3, 3, 3],
+      [3, 3, 3, 3, 0, 3, 3, 3, 3, 3],
+      [3, 3, 3, 3, 0, 3, 3, 3, 3, 3],
+      [3, 3, 3, 3, 0, 3, 3, 3, 3, 3],
+      [3, 3, 3, 3, 0, 3, 3, 3, 3, 3],
+      [3, 3, 3, 3, 0, 3, 3, 3, 3, 3],
+      [3, 3, 3, 3, 0, 3, 3, 3, 3, 3],
+      [3, 3, 3, 3, 0, 3, 3, 3, 3, 3]
+    ],
+    "food": [
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
+    ],
+    "plants": [],
+    "starts": [{"slot": 1, "x": 1, "y": 5}],
+    "criteria": [{"type": "TRAVEL_TO", "slot": 1, "x": 8, "y": 5}]
+  },
+  "solution": {
+    "name": "bridge-the-gap",
+    "owner": null,
+    "root": {
+      "kind": "NUMERIC",
+      "inputs": [{"name": "SELF_DIRT", "args": []}, {"name": "VALUE", "args": [0]}],
+      "children": [
+        {"kind": "OUTPUT", "action": "DEFEND"},
+        {
+          "kind": "NUMERIC",
+          "inputs": [{"name": "DIRT_VALUE", "args": ["RIGHT"]}, {"name": "VALUE", "args": [0]}],
+          "children": [
+            {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+            {
+              "kind": "NUMERIC",
+              "inputs": [{"name": "DIRT_VALUE", "args": ["CURRENT"]}, {"name": "VALUE", "args": [2]}],
+              "children": [
+                {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                {"kind": "OUTPUT", "action": "LIFT_DIRT"}
+              ]
+            },
+            {"kind": "OUTPUT", "action": "MOVE_RIGHT"}
+          ]
+        },
+        {
+          "kind": "NUMERIC",
+          "inputs": [{"name": "DIRT_VALUE", "args": ["RIGHT"]}, {"name": "DIRT_VALUE", "args": ["CURRENT"]}],
+          "children": [
+            {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+            {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+            {
+              "kind": "NUMERIC",
+              "inputs": [{"name": "DIRT_VALUE", "args": ["CURRENT"]}, {"name": "VALUE", "args": [0]}],
+              "children": [
+                {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                {"kind": "OUTPUT", "action": "DROP_DIRT"},
+                {"kind": "OUTPUT", "action": "MOVE_RIGHT"}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

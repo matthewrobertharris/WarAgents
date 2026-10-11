@@ -1,0 +1,36 @@
+{
+  "gameId": "20261011-230338-1946",
+  "mode": "training",
+  "name": "Training: Around a wall",
+  "mapName": "Around a wall",
+  "created": "2026-10-11T23:03:38",
+  "finished": "2026-10-11T23:03:38",
+  "reason": "turn-limit",
+  "outcome": "Time's up after 40 turns",
+  "turns": 40,
+  "winners": [],
+  "placements": [
+    {
+      "slot": 1,
+      "name": "Matt",
+      "place": 1,
+      "alive": 1,
+      "agents": 1,
+      "exp": 39,
+      "eliminated": null,
+      "player": "matt",
+      "colour": "#1c7ed6"
+    }
+  ],
+  "rewards": {
+    "matt": {
+      "agentXp": 39,
+      "fromAgents": 0,
+      "bonus": 0,
+      "total": 0,
+      "before": {"xp": 101, "level": 2, "levelXp": 100, "nextLevelXp": 283, "budget": 25},
+      "after": {"xp": 101, "level": 2, "levelXp": 100, "nextLevelXp": 283, "budget": 25}
+    }
+  },
+  "seenBy": []
+}

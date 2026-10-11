@@ -1,0 +1,72 @@
+{
+  "name": "Head for a goal",
+  "track": "Movement",
+  "order": 3,
+  "level": "Beginner",
+  "maxTurns": 30,
+  "recommendedAfter": ["movement-2"],
+  "brief": "Agents can remember a position. SET_PRIMARY stores one as PRIMARY, and inputs such as GET_X PRIMARY read it back. A NUMERIC node compares two numbers and branches on less than, equal or more than. Asking about PRIMARY before it's set confuses your agent, so check VALID_POSITION PRIMARY first.",
+  "goal": "Reach the flag at x=6, y=7. Try to build a tree that would reach a flag anywhere.",
+  "hints": ["First turn: SET_PRIMARY to the flag's position (x=6, y=7).", "Then compare SELF_X with GET_X PRIMARY: if less, move right; if more, move left.", "When the x values are equal, compare SELF_Y with GET_Y PRIMARY to choose up or down."],
+  "concepts": ["SET_PRIMARY", "VALID_POSITION", "SELF_X", "GET_X", "SELF_Y", "GET_Y", "VALUE"],
+  "map": {
+    "name": "Head for a goal",
+    "mode": "CLICK",
+    "maxAgents": 10,
+    "dirt": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "food": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "plants": [],
+    "starts": [{"slot": 1, "x": 1, "y": 5}],
+    "criteria": [{"type": "TRAVEL_TO", "slot": 1, "x": 6, "y": 7}]
+  },
+  "solution": {
+    "name": "head-for-a-goal",
+    "owner": null,
+    "root": {
+      "kind": "BOOLEAN",
+      "inputs": [{"name": "VALID_POSITION", "args": ["PRIMARY"]}],
+      "children": [
+        {
+          "kind": "NUMERIC",
+          "inputs": [{"name": "SELF_X", "args": []}, {"name": "GET_X", "args": ["PRIMARY"]}],
+          "children": [
+            {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+            {
+              "kind": "NUMERIC",
+              "inputs": [{"name": "SELF_Y", "args": []}, {"name": "GET_Y", "args": ["PRIMARY"]}],
+              "children": [
+                {"kind": "OUTPUT", "action": "MOVE_UP"},
+                {"kind": "OUTPUT", "action": "DEFEND"},
+                {"kind": "OUTPUT", "action": "MOVE_DOWN"}
+              ]
+            },
+            {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+          ]
+        },
+        {"kind": "OUTPUT", "action": "SET_PRIMARY", "args": [{"x": 6, "y": 7}]}
+      ]
+    }
+  }
+}

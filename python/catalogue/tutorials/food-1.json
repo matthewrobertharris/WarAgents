@@ -1,0 +1,46 @@
+{
+  "name": "Eat",
+  "track": "Food",
+  "order": 1,
+  "level": "Beginner",
+  "maxTurns": 10,
+  "brief": "Agents have health. They lose it climbing, carrying things and being attacked, and get it back by eating food from the tile they're on, a health point per food. An agent at full health can't eat. Your agent starts hungry, and every tile has food.",
+  "goal": "Eat 10 food.",
+  "hints": ["EAT eats from the tile you're standing on."],
+  "concepts": ["EAT", "health"],
+  "map": {
+    "name": "Eat",
+    "mode": "CLICK",
+    "maxAgents": 10,
+    "dirt": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "food": [
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
+    ],
+    "plants": [],
+    "starts": [{"slot": 1, "x": 1, "y": 5}],
+    "criteria": [{"type": "EAT_FOOD", "slot": 1, "amount": 10}]
+  },
+  "team": {"startHealth": 20},
+  "solution": {"name": "eat", "owner": null, "root": {"kind": "OUTPUT", "action": "EAT"}},
+  "recommendedAfter": []
+}

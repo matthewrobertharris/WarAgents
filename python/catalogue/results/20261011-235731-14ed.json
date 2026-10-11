@@ -1,0 +1,36 @@
+{
+  "gameId": "20261011-235731-14ed",
+  "mode": "training",
+  "name": "Training: The U-bend",
+  "mapName": "The U-bend",
+  "created": "2026-10-11T23:57:31",
+  "finished": "2026-10-11T23:57:31",
+  "reason": "turn-limit",
+  "outcome": "Time's up after 150 turns",
+  "turns": 150,
+  "winners": [],
+  "placements": [
+    {
+      "slot": 1,
+      "name": "Matt",
+      "place": 1,
+      "alive": 1,
+      "agents": 1,
+      "exp": 15,
+      "eliminated": null,
+      "player": "matt",
+      "colour": "#1c7ed6"
+    }
+  ],
+  "rewards": {
+    "matt": {
+      "agentXp": 15,
+      "fromAgents": 0,
+      "bonus": 0,
+      "total": 0,
+      "before": {"xp": 251, "level": 2, "levelXp": 100, "nextLevelXp": 283, "budget": 25},
+      "after": {"xp": 251, "level": 2, "levelXp": 100, "nextLevelXp": 283, "budget": 25}
+    }
+  },
+  "seenBy": []
+}

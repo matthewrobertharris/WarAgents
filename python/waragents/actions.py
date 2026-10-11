@@ -12,6 +12,7 @@ from enum import Enum
 from typing import ClassVar
 
 from .positions import Position
+from .progression import BLOCK_EXP, KILL_EXP
 from .world import DOWN, LEFT, MOVE_HEALTH, PICKUP_DIRT, PICKUP_FOOD, RIGHT, UP, XY, Agent, World
 
 
@@ -131,15 +132,17 @@ class Attack(_Directional):
 
 
 def attack(attacker: Agent, defender: Agent, world: World) -> bool:
-    power = attacker.power
-    if defender.action is not None and defender.action.activity is Activity.DEFEND:
-        power //= 2
     height_diff = world.tile(attacker.pos).dirt - world.tile(defender.pos).dirt
     if height_diff not in HEIGHT_POWER:
         return False
+    power = attacker.power
+    if defender.action is not None and defender.action.activity is Activity.DEFEND:
+        power //= 2
+        defender.gain_exp(BLOCK_EXP)
     defender.health = defender.health - HEIGHT_POWER[height_diff](power)
     if defender.health < 1:
         world.kill(defender)
+        attacker.gain_exp(KILL_EXP)
     return True
 
 
@@ -343,6 +346,29 @@ def _find_birth_position(world: World, pos: XY) -> XY | None:
             return option
     return None
 
+
+# What each action does, in a sentence, for the guide and the tree editor.
+ACTION_DOCS: dict[str, str] = {
+    **{f"MOVE_{d}": f"Step one tile {d.lower()}. Climbing 2 or carrying anything costs a health point each; "
+                    "a height difference of 3 or more can't be crossed." for d in DIRECTIONS},
+    **{f"ATTACK_{d}": f"Hit the agent one tile {d.lower()} for this agent's power: up to 4 times harder "
+                      "from higher ground, weaker from below, and half as hard if it's defending."
+       for d in DIRECTIONS},
+    "CHANGE_TREE": "Switch to another of the team's trees from the next turn.",
+    "DEFEND": "Do nothing this turn, and take half damage from attacks.",
+    "DROP_DIRT": "Put all the dirt this agent carries on its tile, making it higher.",
+    "DROP_FOOD": "Put all the food this agent carries on its tile.",
+    "EAT": "Eat food from this tile, a health point per food, up to full health.",
+    "LIFT_DIRT": f"Pick up to {PICKUP_DIRT} dirt from this tile, making it lower. Not while carrying food.",
+    "LIFT_FOOD": f"Pick up to {PICKUP_FOOD} food from this tile. Not while carrying dirt.",
+    "REPRODUCE": "Split in two: a new agent appears on a free adjacent tile, and each gets half the health.",
+    "SET_PRIMARY": "Remember a position as PRIMARY.",
+    "CLEAR_PRIMARY": "Forget the PRIMARY position.",
+    "SET_SECONDARY": "Remember a position as SECONDARY.",
+    "CLEAR_SECONDARY": "Forget the SECONDARY position.",
+    "CONFUSED": f"What happens when a tree can't be answered: the agent loses {CONFUSED_HARM} health.",
+    "DEATH": "The agent dies.",
+}
 
 # Actions that take no arguments, keyed by name.
 SIMPLE_ACTIONS: dict[str, type[Action]] = {

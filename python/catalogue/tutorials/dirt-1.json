@@ -1,0 +1,57 @@
+{
+  "name": "Dig your way down",
+  "track": "Dirt",
+  "order": 1,
+  "level": "Beginner",
+  "maxTurns": 30,
+  "brief": "Height is dirt. Agents can't step to a tile 3 or more higher or lower. LIFT_DIRT picks up to 2 dirt from the tile you're on, making it lower, and DROP_DIRT puts it back, making your tile higher. Your agent is stuck on a tower.",
+  "goal": "Get down and walk to the flag at x=7, y=5.",
+  "hints": ["DIRT_VALUE CURRENT is how high your tile is.", "If your tile is higher than 2, LIFT_DIRT; otherwise MOVE_RIGHT."],
+  "concepts": ["LIFT_DIRT", "DIRT_VALUE"],
+  "map": {
+    "name": "Dig your way down",
+    "mode": "CLICK",
+    "maxAgents": 10,
+    "dirt": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+      [1, 4, 1, 0, 0, 0, 0, 0, 0, 0],
+      [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "food": [
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
+    ],
+    "plants": [],
+    "starts": [{"slot": 1, "x": 1, "y": 5}],
+    "criteria": [{"type": "TRAVEL_TO", "slot": 1, "x": 7, "y": 5}]
+  },
+  "solution": {
+    "name": "dig-down",
+    "owner": null,
+    "root": {
+      "kind": "NUMERIC",
+      "inputs": [{"name": "DIRT_VALUE", "args": ["CURRENT"]}, {"name": "VALUE", "args": [2]}],
+      "children": [
+        {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+        {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+        {"kind": "OUTPUT", "action": "LIFT_DIRT"}
+      ]
+    }
+  },
+  "recommendedAfter": []
+}

@@ -1,0 +1,45 @@
+{
+  "name": "First steps",
+  "track": "Movement",
+  "order": 1,
+  "level": "Beginner",
+  "maxTurns": 20,
+  "brief": "Your agent does exactly what its decision tree says, every turn. The simplest tree is a single action. Open your tree in the Workshop and pick an action from the DO part of the dropdown on its first row.",
+  "goal": "Walk your agent to the flag at x=8, y=5.",
+  "hints": ["The flag is straight to the right of your agent.", "A tree with one DO MOVE_RIGHT node does the same thing every turn."],
+  "concepts": ["MOVE_RIGHT"],
+  "map": {
+    "name": "First steps",
+    "mode": "CLICK",
+    "maxAgents": 10,
+    "dirt": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "food": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "plants": [],
+    "starts": [{"slot": 1, "x": 1, "y": 5}],
+    "criteria": [{"type": "TRAVEL_TO", "slot": 1, "x": 8, "y": 5}]
+  },
+  "solution": {"name": "first-steps", "owner": null, "root": {"kind": "OUTPUT", "action": "MOVE_RIGHT"}},
+  "recommendedAfter": []
+}

@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 
 from .tree import Node, Tree
-from .world import XY, Agent, Event, World
+from .world import XY, Agent, Event, Player, World
 
 
 def _xy(pos: XY | None) -> dict[str, int] | None:
@@ -50,6 +50,10 @@ def agent_to_dict(agent: Agent) -> dict[str, Any]:
     }
 
 
+def _hide_thinking(agent: dict[str, Any]) -> dict[str, Any]:
+    return {**agent, "tree": None, "path": [], "pathTree": None, "primary": None, "secondary": None}
+
+
 def event_to_dict(event: Event) -> dict[str, Any]:
     return {"time": event.time, "kind": event.kind, "message": event.message, "agent": event.agent}
 
@@ -59,28 +63,38 @@ def _grid(world: World, attr: str) -> list[list[int | None]]:
              for x in range(world.width)] for y in range(world.height)]
 
 
-def world_to_dict(world: World, include_trees: bool = True) -> dict[str, Any]:
+def world_to_dict(world: World, include_trees: bool = True,
+                  visible: Callable[[Player], bool] | None = None) -> dict[str, Any]:
+    """The world for the front end. visible(player) says whether the viewer may see that team's
+    trees and what its agents were thinking (their last decision path and remembered positions).
+    Other teams' agents are still shown, so the viewer sees what they did but not why."""
+    visible = visible or (lambda player: True)
     state: dict[str, Any] = {
         "time": world.time,
         "width": world.width,
         "height": world.height,
         "mode": world.mode,
         "seed": world.seed,
+        "maxTurns": world.max_turns,
         "finished": world.finished,
         "outcome": world.outcome,
+        "result": world.result,
         # Row-major by y so the client can index tiles[y][x]. None is a hole.
         "dirt": _grid(world, "dirt"),
         "food": _grid(world, "food"),
         "plants": [{"id": p.id, "x": p.pos.x, "y": p.pos.y, "rate": p.rate} for p in world.plants],
-        "agents": [agent_to_dict(a) for a in world.agents],
+        "agents": [agent_to_dict(a) if visible(a.player) else _hide_thinking(agent_to_dict(a))
+                   for a in world.agents],
         "players": [
             {
                 "name": p.name,
+                "slot": p.slot,
                 "colour": p.colour,
                 "alive": len(p.agents),
                 "total": len(p.all_agents),
                 "maxAgents": p.max_agents,
-                **({"trees": [tree_to_dict(t) for t in p.trees]} if include_trees else {}),
+                "hidden": not visible(p),
+                **({"trees": [tree_to_dict(t) for t in p.trees]} if include_trees and visible(p) else {}),
             }
             for p in world.players
         ],

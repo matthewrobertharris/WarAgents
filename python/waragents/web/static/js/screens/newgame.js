@@ -1,10 +1,13 @@
-// Setting up a game: pick a map, then how many teams play, then each team's player, starting tree
-// and stats. Starting it saves the game to the catalogue and opens it.
+// The sandbox (#/sandbox): set up any game and watch it play out, for testing trees. Pick a map,
+// how many teams play, and each team's tree and stats. There's no XP, and you can only play as
+// yourself or as teams with default trees. Starting it saves the game and opens it.
 
 import { get, post } from "../api.js";
 import { mapPreview } from "../board.js";
 import { slotColour } from "../colours.js";
 import { empty, fill, h, showError } from "../dom.js";
+import { battleTabs } from "../format.js";
+import { isAdmin, user } from "../session.js";
 
 const STATS = [["speed", 10], ["health", 100], ["power", 10]];
 
@@ -19,14 +22,18 @@ export function describeCriterion(c, teamName) {
     case "TRAVEL_TO": return `${teamName(c.slot)} wins by reaching ${c.x}, ${c.y}`;
     case "PERFORM_ACTION": return `${teamName(c.slot)} wins by doing ${c.action} ${c.times} times`;
     case "FIND_THING": return `The first agent to find ${c.thing} wins`;
+    case "EAT_FOOD": return `${teamName(c.slot)} wins by eating ${c.amount} food`;
+    case "TEAM_SIZE": return `${teamName(c.slot)} wins by having ${c.size} agents at once`;
     default: return c.type;
   }
 }
 
 export async function mount(root, params, query) {
-  const [maps, players, trees] = await Promise.all([
+  const [maps, everyone, trees] = await Promise.all([
     get("/api/catalogue/maps"), get("/api/catalogue/players"), get("/api/catalogue/trees"),
   ]);
+  // A team can be yours or use the default trees. Admins can set up a team for anyone.
+  const players = isAdmin() ? everyone : everyone.filter((p) => p.id === user().id);
   const blocked = (m) => m.error ?? (m.problems?.length ? `Not playable yet: ${m.problems.join("; ")}` : null);
   const playable = maps.filter((m) => !blocked(m));
   const state = {
@@ -102,9 +109,11 @@ export async function mount(root, params, query) {
   const teamsCard = h("section", { class: "card step" });
   const rulesCard = h("section", { class: "card step" });
   root.append(
+    battleTabs("sandbox"),
     h("div", { class: "page-head" }, h("div", {},
-      h("h1", {}, "New game"),
-      h("p", { class: "hint" }, "Games are saved as soon as they start, so you can load them again later."))),
+      h("h1", {}, "Sandbox"),
+      h("p", { class: "hint" }, "Set up any game and watch it play out, step by step. Good for testing trees. ",
+        "Sandbox games give no XP; for that, go to ", h("a", { href: "#/battle" }, "Battle"), "."))),
     mapsCard, teamsCard, rulesCard);
 
   function render() {

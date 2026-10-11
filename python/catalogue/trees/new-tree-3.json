@@ -1,0 +1,84 @@
+{
+  "name": "tut-movement-6-secondary",
+  "owner": "matt",
+  "root": {
+    "kind": "BOOLEAN",
+    "inputs": [{"name": "VALID_POSITION", "args": ["SECONDARY"]}],
+    "children": [
+      {
+        "kind": "NUMERIC",
+        "inputs": [{"name": "GET_Y", "args": ["CURRENT"]}, {"name": "GET_Y", "args": ["PRIMARY"]}],
+        "children": [
+          {"kind": "OUTPUT", "action": "CONFUSED"},
+          {
+            "kind": "NUMERIC",
+            "inputs": [{"name": "GET_X", "args": ["CURRENT"]}, {"name": "GET_X", "args": ["SECONDARY"]}],
+            "children": [
+              {"kind": "OUTPUT", "action": "CONFUSED"},
+              {"kind": "OUTPUT", "action": "MOVE_UP"},
+              {"kind": "OUTPUT", "action": "CLEAR_SECONDARY"}
+            ]
+          },
+          {
+            "kind": "BOOLEAN",
+            "inputs": [{"name": "SELF_PREVIOUS_ACTION", "args": ["MOVE_UP"]}],
+            "children": [
+              {
+                "kind": "BOOLEAN",
+                "inputs": [{"name": "VALID_POSITION", "args": ["RIGHT"]}],
+                "children": [
+                  {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                  {"kind": "OUTPUT", "action": "MOVE_UP"}
+                ]
+              },
+              {
+                "kind": "BOOLEAN",
+                "inputs": [{"name": "SELF_PREVIOUS_ACTION", "args": ["MOVE_RIGHT"]}],
+                "children": [
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "VALID_POSITION", "args": ["DOWN"]}],
+                    "children": [
+                      {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                      {"kind": "OUTPUT", "action": "MOVE_RIGHT"}
+                    ]
+                  },
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "SELF_PREVIOUS_ACTION", "args": ["MOVE_DOWN"]}],
+                    "children": [
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "VALID_POSITION", "args": ["LEFT"]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                          {"kind": "OUTPUT", "action": "MOVE_DOWN"}
+                        ]
+                      },
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "SELF_PREVIOUS_ACTION", "args": ["MOVE_LEFT"]}],
+                        "children": [
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "VALID_POSITION", "args": ["DOWN"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                              {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+                            ]
+                          },
+                          {"kind": "OUTPUT", "action": "CONFUSED"}
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {"kind": "OUTPUT", "action": "CHANGE_TREE", "args": ["tut-movement-6"]}
+    ]
+  }
+}

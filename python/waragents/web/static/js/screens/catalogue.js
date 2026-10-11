@@ -44,7 +44,7 @@ async function mapsTab(body, refresh) {
       h("td", {}, m.mode ?? ""),
       h("td", { class: "actions" },
         m.error ? null : h("a", { class: "button small", href: `#/maps/${m.id}` }, "Edit"),
-        m.error || m.problems?.length ? null : h("a", { class: "button small", href: `#/new?map=${m.id}` }, "Play"),
+        m.error || m.problems?.length ? null : h("a", { class: "button small", href: `#/battle?map=${m.id}` }, "Play"),
         deleteButton("maps", m, refresh)))))
     : empty("No maps yet. Make one in the map editor, or import a .map file."));
 }
@@ -69,7 +69,7 @@ async function playersTab(body, refresh) {
   body.replaceChildren(
     h("p", { class: "hint" },
       "A player is a person. Their trees belong to them, and their colour is used for their teams. ",
-      "Add and edit players on the ", h("a", { href: "#/players" }, "Players"), " screen."),
+      "Players sign up for themselves, and change their own details on their Account."),
     players.length ? table(["Player", "Colour", "Starting tree", "Trees", "Joined", ""], players.map((p) =>
       h("tr", {},
         h("td", {}, h("a", { href: `#/players/${p.id}` }, h("strong", {}, p.name)), h("div", { class: "hint" }, p.id)),
@@ -115,7 +115,7 @@ async function importTab(body) {
         try {
           const done = await post("/api/catalogue/import", { text: text.value, name: name.value.trim(), owner: owner.value || null });
           result.replaceChildren(h("div", { class: "banner outcome" },
-            "Imported the map ", h("a", { href: `#/new?map=${done.map}` }, done.map),
+            "Imported the map ", h("a", { href: `#/battle?map=${done.map}` }, done.map),
             ` and ${done.trees.length} tree${done.trees.length === 1 ? "" : "s"}: `,
             done.trees.map((id, i) => [i ? ", " : "", h("a", { href: `#/trees/${id}` }, id)])));
         } catch (err) {

@@ -1,1 +1,17 @@
-{"name": "Matt", "colour": "#1c7ed6", "startTree": null, "created": "2026-10-03T01:11:34"}
+{
+  "name": "Matt",
+  "colour": "#1c7ed6",
+  "startTree": null,
+  "created": "2026-10-03T01:11:34",
+  "passwordHash": "scrypt:32768:8:1$ER9DUaRMqDlWanCA$4929679766b804c6358253c3d276d647e15f215c8ccc2befda1b7b0ac6ca284fb080e7b6b627b435716304c54431f85323501945b642b68217d97bb49ada1f86",
+  "admin": true,
+  "xp": 368,
+  "training": {
+    "movement-1": {"completed": "2026-10-11T22:52:36", "turns": 7},
+    "movement-2": {"completed": "2026-10-11T22:53:45", "turns": 12},
+    "movement-3": {"completed": "2026-10-11T22:58:25", "turns": 8},
+    "movement-4": {"completed": "2026-10-11T23:04:53", "turns": 13},
+    "movement-5": {"completed": "2026-10-11T23:24:10", "turns": 38},
+    "movement-6": {"completed": "2026-10-12T00:00:33", "turns": 22}
+  }
+}

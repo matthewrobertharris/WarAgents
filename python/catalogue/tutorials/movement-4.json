@@ -1,0 +1,128 @@
+{
+  "name": "Around a wall",
+  "track": "Movement",
+  "order": 4,
+  "level": "Intermediate",
+  "maxTurns": 40,
+  "recommendedAfter": ["movement-3"],
+  "brief": "Gaps in the map are holes: your agent can't go there, and IN_BOUNDS says no for them, just like the edge of the map. A wall stands between your agent and the flag.",
+  "goal": "Get round the wall to the flag at x=7, y=5.",
+  "hints": ["Start with your tree from Head for a goal.", "When the way right is blocked, step up (or down) instead, and try right again next turn.", "Guard every move with IN_BOUNDS so your agent never walks into the wall."],
+  "concepts": ["IN_BOUNDS", "holes"],
+  "map": {
+    "name": "Around a wall",
+    "mode": "CLICK",
+    "maxAgents": 10,
+    "dirt": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "food": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "plants": [],
+    "starts": [{"slot": 1, "x": 1, "y": 5}],
+    "criteria": [{"type": "TRAVEL_TO", "slot": 1, "x": 7, "y": 5}]
+  },
+  "solution": {
+    "name": "around-a-wall",
+    "owner": null,
+    "root": {
+      "kind": "BOOLEAN",
+      "inputs": [{"name": "VALID_POSITION", "args": ["PRIMARY"]}],
+      "children": [
+        {
+          "kind": "NUMERIC",
+          "inputs": [{"name": "SELF_X", "args": []}, {"name": "GET_X", "args": ["PRIMARY"]}],
+          "children": [
+            {
+              "kind": "BOOLEAN",
+              "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+              "children": [
+                {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                {
+                  "kind": "BOOLEAN",
+                  "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                  "children": [
+                    {"kind": "OUTPUT", "action": "MOVE_UP"},
+                    {"kind": "OUTPUT", "action": "MOVE_DOWN"}
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "NUMERIC",
+              "inputs": [{"name": "SELF_Y", "args": []}, {"name": "GET_Y", "args": ["PRIMARY"]}],
+              "children": [
+                {
+                  "kind": "BOOLEAN",
+                  "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                  "children": [
+                    {"kind": "OUTPUT", "action": "MOVE_UP"},
+                    {
+                      "kind": "BOOLEAN",
+                      "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                      "children": [
+                        {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                        {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+                      ]
+                    }
+                  ]
+                },
+                {"kind": "OUTPUT", "action": "DEFEND"},
+                {
+                  "kind": "BOOLEAN",
+                  "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                  "children": [
+                    {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                    {
+                      "kind": "BOOLEAN",
+                      "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                      "children": [
+                        {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                        {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "BOOLEAN",
+              "inputs": [{"name": "IN_BOUNDS", "args": ["LEFT"]}],
+              "children": [
+                {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                {
+                  "kind": "BOOLEAN",
+                  "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                  "children": [
+                    {"kind": "OUTPUT", "action": "MOVE_UP"},
+                    {"kind": "OUTPUT", "action": "MOVE_DOWN"}
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {"kind": "OUTPUT", "action": "SET_PRIMARY", "args": [{"x": 7, "y": 5}]}
+      ]
+    }
+  }
+}

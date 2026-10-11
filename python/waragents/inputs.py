@@ -95,6 +95,8 @@ class LegalMove(BooleanInput):
 
 @register
 class FoodAdjacent(BooleanInput):
+    """Is there food on any adjacent tile?"""
+
     name = "FOOD_ADJACENT"
 
     def evaluate(self, agent: Agent, world: World) -> bool:
@@ -103,6 +105,8 @@ class FoodAdjacent(BooleanInput):
 
 @register
 class EnemyAdjacent(BooleanInput):
+    """Is an enemy agent on any adjacent tile?"""
+
     name = "ENEMY_ADJACENT"
 
     def evaluate(self, agent: Agent, world: World) -> bool:
@@ -111,6 +115,8 @@ class EnemyAdjacent(BooleanInput):
 
 @register
 class AllyAdjacent(BooleanInput):
+    """Is an agent from this team on any adjacent tile?"""
+
     name = "ALLY_ADJACENT"
 
     def evaluate(self, agent: Agent, world: World) -> bool:
@@ -130,6 +136,8 @@ class PlantAdjacent(BooleanInput):
 
 @register
 class PlantCurrent(BooleanInput):
+    """Is this agent standing on a plant?"""
+
     name = "PLANT_CURRENT"
 
     def evaluate(self, agent: Agent, world: World) -> bool:
@@ -150,6 +158,8 @@ class ReproduceLegal(BooleanInput):
 @register
 @dataclass(frozen=True)
 class HasFood(BooleanInput):
+    """Is there food on the tile at the position?"""
+
     name: ClassVar[str] = "HAS_FOOD"
     args = ("position",)
     position: Position
@@ -161,6 +171,8 @@ class HasFood(BooleanInput):
 @register
 @dataclass(frozen=True)
 class HasPlant(BooleanInput):
+    """Is there a plant on the tile at the position?"""
+
     name: ClassVar[str] = "HAS_PLANT"
     args = ("position",)
     position: Position
@@ -172,6 +184,8 @@ class HasPlant(BooleanInput):
 @register
 @dataclass(frozen=True)
 class HasEnemy(BooleanInput):
+    """Is there an enemy agent on the tile at the position?"""
+
     name: ClassVar[str] = "HAS_ENEMY"
     args = ("position",)
     position: Position
@@ -184,6 +198,8 @@ class HasEnemy(BooleanInput):
 @register
 @dataclass(frozen=True)
 class HasAlly(BooleanInput):
+    """Is there an agent from this team on the tile at the position?"""
+
     name: ClassVar[str] = "HAS_ALLY"
     args = ("position",)
     position: Position
@@ -196,6 +212,8 @@ class HasAlly(BooleanInput):
 @register
 @dataclass(frozen=True)
 class Occupied(BooleanInput):
+    """Is any agent on the tile at the position?"""
+
     name: ClassVar[str] = "OCCUPIED"
     args = ("position",)
     position: Position
@@ -207,6 +225,8 @@ class Occupied(BooleanInput):
 @register
 @dataclass(frozen=True)
 class InBounds(BooleanInput):
+    """Is the position a tile on the map (not off the edge or a hole)?"""
+
     name: ClassVar[str] = "IN_BOUNDS"
     args = ("position",)
     position: Position
@@ -232,6 +252,8 @@ class ValidPosition(BooleanInput):
 @register
 @dataclass(frozen=True)
 class PositionMatch(BooleanInput):
+    """Are the two positions the same tile?"""
+
     name: ClassVar[str] = "POSITION_MATCH"
     args = ("position", "position")
     position1: Position
@@ -277,6 +299,8 @@ class EnemyAction(BooleanInput):
 @register
 @dataclass(frozen=True)
 class CurrentTree(BooleanInput):
+    """Is this agent following the named tree right now?"""
+
     name: ClassVar[str] = "CURRENT_TREE"
     args = ("name",)
     tree: str
@@ -305,6 +329,8 @@ class PreviousAction(BooleanInput):
 @register
 @dataclass(frozen=True)
 class Value(NumericInput):
+    """A fixed number you choose, to compare another input with."""
+
     name: ClassVar[str] = "VALUE"
     args = ("int",)
     value: int
@@ -325,6 +351,8 @@ class RandomValue(NumericInput):
 
 @register
 class Time(NumericInput):
+    """The current turn number."""
+
     name = "TIME"
 
     def evaluate(self, agent: Agent, world: World) -> int:
@@ -334,6 +362,8 @@ class Time(NumericInput):
 @register
 @dataclass(frozen=True)
 class FoodValue(NumericInput):
+    """How much food is on the tile at the position."""
+
     name: ClassVar[str] = "FOOD_VALUE"
     args = ("position",)
     position: Position
@@ -345,6 +375,8 @@ class FoodValue(NumericInput):
 @register
 @dataclass(frozen=True)
 class DirtValue(NumericInput):
+    """How high the tile at the position is (its dirt)."""
+
     name: ClassVar[str] = "DIRT_VALUE"
     args = ("position",)
     position: Position
@@ -356,6 +388,8 @@ class DirtValue(NumericInput):
 @register
 @dataclass(frozen=True)
 class GetX(NumericInput):
+    """The x of the position (0 is the left edge)."""
+
     name: ClassVar[str] = "GET_X"
     args = ("position",)
     position: Position
@@ -367,6 +401,8 @@ class GetX(NumericInput):
 @register
 @dataclass(frozen=True)
 class GetY(NumericInput):
+    """The y of the position (0 is the bottom edge)."""
+
     name: ClassVar[str] = "GET_Y"
     args = ("position",)
     position: Position
@@ -378,6 +414,8 @@ class GetY(NumericInput):
 @register
 @dataclass(frozen=True)
 class PlantRate(NumericInput):
+    """How fast the plant at the position grows food. Confused if there's no plant there."""
+
     name: ClassVar[str] = "PLANT_RATE"
     args = ("position",)
     position: Position
@@ -391,6 +429,8 @@ class PlantRate(NumericInput):
 
 @register
 class MapWidth(NumericInput):
+    """How many tiles wide the map is."""
+
     name = "MAP_WIDTH"
 
     def evaluate(self, agent: Agent, world: World) -> int:
@@ -399,6 +439,8 @@ class MapWidth(NumericInput):
 
 @register
 class MapHeight(NumericInput):
+    """How many tiles tall the map is."""
+
     name = "MAP_HEIGHT"
 
     def evaluate(self, agent: Agent, world: World) -> int:
@@ -407,6 +449,8 @@ class MapHeight(NumericInput):
 
 @register
 class MaxDirt(NumericInput):
+    """The highest a tile can be."""
+
     name = "MAX_DIRT"
 
     def evaluate(self, agent: Agent, world: World) -> int:
@@ -415,6 +459,8 @@ class MaxDirt(NumericInput):
 
 @register
 class MaxFood(NumericInput):
+    """The most food a tile can hold."""
+
     name = "MAX_FOOD"
 
     def evaluate(self, agent: Agent, world: World) -> int:
@@ -423,6 +469,8 @@ class MaxFood(NumericInput):
 
 @register
 class TeamSize(NumericInput):
+    """How many agents this team has alive."""
+
     name = "TEAM_SIZE"
 
     def evaluate(self, agent: Agent, world: World) -> int:
@@ -431,6 +479,8 @@ class TeamSize(NumericInput):
 
 @register
 class MaxTeamSize(NumericInput):
+    """The most agents this team can have at once."""
+
     name = "MAX_TEAM_SIZE"
 
     def evaluate(self, agent: Agent, world: World) -> int:
@@ -492,6 +542,8 @@ def _step_towards(start: XY, target: XY) -> XY:
 @register
 @dataclass(frozen=True)
 class DirectionTo(PositionInput):
+    """Which way to step to get closer to the position."""
+
     name: ClassVar[str] = "DIRECTION_TO"
     args = ("position",)
     position: Position
@@ -503,7 +555,8 @@ class DirectionTo(PositionInput):
 @register
 @dataclass(frozen=True)
 class AStar(PositionInput):
-    """Meant to be the next step of an A* path. For now it's the same greedy step as DIRECTION_TO."""
+    """Which way to step towards the position. Meant to follow an A* path around obstacles; for now
+    it's the same straight-line step as DIRECTION_TO."""
 
     name: ClassVar[str] = "A_STAR"
     args = ("position",)
@@ -530,6 +583,8 @@ class _AdjacentAgentPos(PositionInput):
 
 @register
 class EnemyAdjacentPos(_AdjacentAgentPos):
+    """Where an adjacent enemy is (a random one if there are several), or this agent's own tile if none."""
+
     name = "ENEMY_ADJACENT_POS"
 
     def matches(self, agent: Agent, other: Agent | None) -> bool:
@@ -538,6 +593,8 @@ class EnemyAdjacentPos(_AdjacentAgentPos):
 
 @register
 class AllyAdjacentPos(_AdjacentAgentPos):
+    """Where an adjacent ally is (a random one if there are several), or this agent's own tile if none."""
+
     name = "ALLY_ADJACENT_POS"
 
     def matches(self, agent: Agent, other: Agent | None) -> bool:

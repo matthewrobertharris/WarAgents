@@ -101,11 +101,11 @@ def test_playable_trees_cannot_have_empty_slots():
 def test_tree_references_and_renames():
     data = tree({"kind": "BOOLEAN", "inputs": [{"name": "CURRENT_TREE", "args": ["a"]}],
                  "children": [output("CHANGE_TREE", "b"), output("CHANGE_TREE", "a")]}, name="a")
-    assert tree_references(data) == {"a", "b"}
+    assert tree_references(data) == ["a", "b"]
     renamed = rename_trees(data, {"a": "a-2"})
     assert renamed["name"] == "a-2"
     assert renamed["root"]["inputs"][0]["args"] == ["a-2"]
-    assert tree_references(renamed) == {"a-2", "b"}
+    assert tree_references(renamed) == ["a-2", "b"]
     assert data["name"] == "a"  # the original is untouched
 
 

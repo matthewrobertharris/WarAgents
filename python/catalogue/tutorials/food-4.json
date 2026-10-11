@@ -1,0 +1,61 @@
+{
+  "name": "Plants",
+  "track": "Food",
+  "order": 4,
+  "level": "Beginner",
+  "maxTurns": 60,
+  "recommendedAfter": ["food-1"],
+  "brief": "There's no food anywhere, but plants grow it: every turn a plant puts food on its own tile and a little on the tiles around it. A plant is a food supply that never runs out. Your agent starts very hungry.",
+  "goal": "Eat 30 food.",
+  "hints": ["PLANT_CURRENT says whether you're standing on a plant.", "Walk to the plant, then eat whenever there's food on your tile."],
+  "concepts": ["PLANT_CURRENT", "HAS_FOOD", "plants"],
+  "map": {
+    "name": "Plants",
+    "mode": "CLICK",
+    "maxAgents": 10,
+    "dirt": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "food": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "plants": [{"x": 7, "y": 5, "rate": 16}],
+    "starts": [{"slot": 1, "x": 1, "y": 5}],
+    "criteria": [{"type": "EAT_FOOD", "slot": 1, "amount": 30}]
+  },
+  "team": {"startHealth": 5},
+  "solution": {
+    "name": "plants",
+    "owner": null,
+    "root": {
+      "kind": "BOOLEAN",
+      "inputs": [{"name": "PLANT_CURRENT", "args": []}],
+      "children": [
+        {
+          "kind": "BOOLEAN",
+          "inputs": [{"name": "HAS_FOOD", "args": ["CURRENT"]}],
+          "children": [{"kind": "OUTPUT", "action": "EAT"}, {"kind": "OUTPUT", "action": "DEFEND"}]
+        },
+        {"kind": "OUTPUT", "action": "MOVE_RIGHT"}
+      ]
+    }
+  }
+}

@@ -1,6 +1,7 @@
 // Editing one map. The map grows from the dashed + cells around its edge, so it can be any
 // shape. Select tiles by clicking or dragging, then change them from the toolbar under the map.
-// Changes save themselves a moment after you stop, and Ctrl+Z / Ctrl+Y undo and redo.
+// Changes save themselves a moment after you stop, and Ctrl+Z / Ctrl+Y undo and redo. A map that
+// isn't yours (a system map, or one someone published) opens read-only.
 //
 // While editing, the map is kept as tiles keyed by "x,y". Its lowest x and y are always 0
 // (normalise() shifts everything after a change), so the keys match the saved file.
@@ -9,6 +10,7 @@ import { get, put, reference } from "../api.js";
 import { drawBoard } from "../board.js";
 import { slotColour } from "../colours.js";
 import { fill, h, showError } from "../dom.js";
+import { isAdmin, user } from "../session.js";
 import { describeCriterion } from "./newgame.js";
 
 const MAX_DIRT = 15;
@@ -19,7 +21,7 @@ const MODES = {
   CLICK: "2 turns a second",
   CONST: "25 turns a second",
 };
-const CRITERION_DEFAULTS = { turns: 300, amount: 50, exp: 10, dirt: 0, times: 5, x: 0, y: 0, action: "EAT" };
+const CRITERION_DEFAULTS = { turns: 300, amount: 50, exp: 10, dirt: 0, times: 5, size: 2, x: 0, y: 0, action: "EAT" };
 
 const key = (x, y) => `${x},${y}`;
 const unkey = (k) => k.split(",").map(Number);
@@ -31,6 +33,7 @@ const NEIGHBOURS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 function fromJson(map) {
   const model = {
     name: map.name, mode: map.mode, maxAgents: map.maxAgents,
+    owner: map.owner ?? null, published: Boolean(map.published),
     criteria: structuredClone(map.criteria ?? []),
     tiles: new Map(), plants: new Map(), starts: new Map(),
   };
@@ -59,6 +62,8 @@ function toJson(model) {
     Array.from({ length: width }, (_, x) => model.tiles.get(key(x, y))?.[attr] ?? null));
   return {
     name: model.name,
+    owner: model.owner,
+    published: model.published,
     mode: model.mode,
     maxAgents: model.maxAgents,
     dirt: grid("dirt"),
@@ -117,7 +122,7 @@ export async function mount(root, mapId, query) {
 
   const title = h("h1", {}, ed.model.name);
   const statusText = h("span", { class: "save-status" });
-  const playLink = h("a", { class: "button primary", href: `#/new?map=${mapId}` }, "Play this map");
+  const playLink = h("a", { class: "button primary", href: `#/battle?map=${mapId}` }, "Play this map");
   const canvas = h("canvas", { class: "editor-canvas" });
   const tip = h("div", { class: "tooltip", hidden: true });
   const undoButton = h("button", { class: "small", title: "Ctrl+Z", onclick: undo }, "Undo");
@@ -127,10 +132,13 @@ export async function mount(root, mapId, query) {
   const criteriaCard = h("section", { class: "card" });
   const problemsCard = h("section", { class: "card" });
 
+  const canSave = isAdmin() || saved.owner === user().id;
   root.append(
     h("div", { class: "page-head" },
-      h("div", {}, title, h("p", { class: "hint" }, "Changes save automatically. ", statusText)),
+      h("div", {}, title, h("p", { class: "hint" }, canSave ? "Changes save automatically. " : "", statusText)),
       h("div", { class: "head-actions" }, playLink, h("a", { class: "button", href: "#/maps" }, "All maps"))),
+    canSave ? "" : h("p", { class: "banner note readonly" },
+      "This map isn't yours, so you can look and try changes but they won't be saved."),
     h("div", { class: "layout editor-layout" },
       h("section", { class: "card board" },
         h("div", { class: "controls" },
@@ -198,7 +206,8 @@ export async function mount(root, mapId, query) {
 
   function scheduleSave() {
     ed.dirty = true;
-    setStatus("Unsaved changes");
+    setStatus(canSave ? "Unsaved changes" : "Read-only: changes aren't saved");
+    if (!canSave) return;
     clearTimeout(ed.saveTimer);
     ed.saveTimer = setTimeout(save, 600);
   }
@@ -573,7 +582,12 @@ export async function mount(root, mapId, query) {
       h("p", { class: "hint" },
         `${width}×${height} · ${m.tiles.size} tile${m.tiles.size === 1 ? "" : "s"} · `,
         `${m.plants.size} plant${m.plants.size === 1 ? "" : "s"} · `,
-        `${slotsOf(m).length} start slot${slotsOf(m).length === 1 ? "" : "s"}`));
+        `${slotsOf(m).length} start slot${slotsOf(m).length === 1 ? "" : "s"}`),
+      m.owner === null ? h("p", { class: "hint" }, "A system map: every player can fight on it.")
+        : h("label", { class: "inline publish" }, h("input", {
+          type: "checkbox", checked: m.published,
+          onchange: (e) => change("published", () => { m.published = e.target.checked; }),
+        }), "Published: other players can fight on this map in Skirmish"));
     return name;
   }
 

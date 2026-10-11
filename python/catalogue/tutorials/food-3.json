@@ -1,0 +1,81 @@
+{
+  "name": "Pack a lunch",
+  "track": "Food",
+  "order": 3,
+  "level": "Intermediate",
+  "maxTurns": 80,
+  "recommendedAfter": ["food-2"],
+  "brief": "Only your starting tile has food, and the path to the flag goes up and down. Carrying food costs a health point per move on top of climbing, but you can't eat what you carry: drop it, eat it, and pick up what's left. LIFT_FOOD picks up to 10 food from your tile, DROP_FOOD puts it all down, and SELF_FOOD says how much you're carrying.",
+  "goal": "Reach the flag at x=8, y=5.",
+  "hints": ["Not carrying: on a tile with food, EAT until you're full, then LIFT_FOOD. With no food here, move on.", "Carrying: move on while you have the health for it (3 or more); otherwise DROP_FOOD so you can eat."],
+  "concepts": ["LIFT_FOOD", "DROP_FOOD", "SELF_FOOD", "HAS_FOOD", "SELF_MAXHEALTH"],
+  "map": {
+    "name": "Pack a lunch",
+    "mode": "CLICK",
+    "maxAgents": 10,
+    "dirt": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 2, 0, 2, 0, 2, 0, 2, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "food": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 100, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "plants": [],
+    "starts": [{"slot": 1, "x": 1, "y": 5}],
+    "criteria": [{"type": "TRAVEL_TO", "slot": 1, "x": 8, "y": 5}]
+  },
+  "team": {"health": 4},
+  "solution": {
+    "name": "pack-a-lunch",
+    "owner": null,
+    "root": {
+      "kind": "NUMERIC",
+      "inputs": [{"name": "SELF_FOOD", "args": []}, {"name": "VALUE", "args": [0]}],
+      "children": [
+        {"kind": "OUTPUT", "action": "DEFEND"},
+        {
+          "kind": "BOOLEAN",
+          "inputs": [{"name": "HAS_FOOD", "args": ["CURRENT"]}],
+          "children": [
+            {
+              "kind": "NUMERIC",
+              "inputs": [{"name": "SELF_HEALTH", "args": []}, {"name": "SELF_MAXHEALTH", "args": []}],
+              "children": [
+                {"kind": "OUTPUT", "action": "EAT"},
+                {"kind": "OUTPUT", "action": "LIFT_FOOD"},
+                {"kind": "OUTPUT", "action": "LIFT_FOOD"}
+              ]
+            },
+            {"kind": "OUTPUT", "action": "MOVE_RIGHT"}
+          ]
+        },
+        {
+          "kind": "NUMERIC",
+          "inputs": [{"name": "SELF_HEALTH", "args": []}, {"name": "VALUE", "args": [3]}],
+          "children": [
+            {"kind": "OUTPUT", "action": "DROP_FOOD"},
+            {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+            {"kind": "OUTPUT", "action": "MOVE_RIGHT"}
+          ]
+        }
+      ]
+    }
+  }
+}

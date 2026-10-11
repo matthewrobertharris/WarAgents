@@ -1,0 +1,81 @@
+{
+  "name": "Training: Head for a goal",
+  "created": "2026-10-11T22:58:25",
+  "mode": "training",
+  "seed": 353193,
+  "mapId": null,
+  "map": {
+    "name": "Head for a goal",
+    "mode": "CLICK",
+    "maxAgents": 10,
+    "dirt": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "food": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "plants": [],
+    "starts": [{"slot": 1, "x": 1, "y": 5}],
+    "criteria": [{"type": "TRAVEL_TO", "slot": 1, "x": 6, "y": 7}]
+  },
+  "teams": [
+    {
+      "slot": 1,
+      "name": "Matt",
+      "colour": "#1c7ed6",
+      "player": "matt",
+      "speed": 10,
+      "health": 100,
+      "power": 10,
+      "startTree": "tut-movement-3",
+      "trees": [
+        {
+          "name": "tut-movement-3",
+          "owner": "matt",
+          "root": {
+            "kind": "BOOLEAN",
+            "inputs": [{"name": "VALID_POSITION", "args": ["PRIMARY"]}],
+            "children": [
+              {
+                "kind": "POSITION",
+                "inputs": [{"name": "DIRECTION_TO", "args": ["PRIMARY"]}],
+                "children": [
+                  {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                  {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                  {"kind": "OUTPUT", "action": "MOVE_UP"},
+                  {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                  {"kind": "OUTPUT", "action": "DEFEND"}
+                ]
+              },
+              {"kind": "OUTPUT", "action": "SET_PRIMARY", "args": [{"x": 6, "y": 7}]}
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "criteria": [{"type": "TRAVEL_TO", "slot": 1, "x": 6, "y": 7}],
+  "maxTurns": 30,
+  "rules": 1,
+  "createdBy": "matt",
+  "participants": ["matt"],
+  "tutorialId": "movement-3"
+}

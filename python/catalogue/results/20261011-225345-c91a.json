@@ -1,0 +1,36 @@
+{
+  "gameId": "20261011-225345-c91a",
+  "mode": "training",
+  "name": "Training: Into the corner",
+  "mapName": "Into the corner",
+  "created": "2026-10-11T22:53:45",
+  "finished": "2026-10-11T22:53:45",
+  "reason": "criteria",
+  "outcome": "Matt reached x=9 y=9",
+  "turns": 12,
+  "winners": [1],
+  "placements": [
+    {
+      "slot": 1,
+      "name": "Matt",
+      "place": 1,
+      "alive": 1,
+      "agents": 1,
+      "exp": 12,
+      "eliminated": null,
+      "player": "matt",
+      "colour": "#1c7ed6"
+    }
+  ],
+  "rewards": {
+    "matt": {
+      "agentXp": 12,
+      "fromAgents": 12,
+      "bonus": 25,
+      "total": 37,
+      "before": {"xp": 32, "level": 1, "levelXp": 0, "nextLevelXp": 100, "budget": 20},
+      "after": {"xp": 69, "level": 1, "levelXp": 0, "nextLevelXp": 100, "budget": 20}
+    }
+  },
+  "seenBy": []
+}

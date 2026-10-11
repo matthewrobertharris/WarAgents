@@ -1,0 +1,77 @@
+{
+  "name": "Attack",
+  "track": "Combat",
+  "order": 2,
+  "level": "Beginner",
+  "maxTurns": 30,
+  "recommendedAfter": ["combat-1"],
+  "brief": "ATTACK_LEFT, ATTACK_RIGHT, ATTACK_UP and ATTACK_DOWN hit the agent next to you that way. ENEMY_ADJACENT_POS is where an adjacent enemy is, so a POSITION node on it tells you which way to swing. These raiders only defend.",
+  "goal": "Wipe out the raiders.",
+  "hints": ["POSITION ENEMY_ADJACENT_POS: left → ATTACK_LEFT, right → ATTACK_RIGHT, and so on.", "When no enemy is next to you it points at your own tile, the last branch."],
+  "concepts": ["ATTACK_LEFT", "ENEMY_ADJACENT_POS", "POSITION nodes"],
+  "map": {
+    "name": "Attack",
+    "mode": "CLICK",
+    "maxAgents": 10,
+    "dirt": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "food": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "plants": [],
+    "starts": [
+      {"slot": 1, "x": 4, "y": 5},
+      {"slot": 2, "x": 4, "y": 6},
+      {"slot": 2, "x": 3, "y": 5},
+      {"slot": 2, "x": 5, "y": 5},
+      {"slot": 2, "x": 4, "y": 4}
+    ],
+    "criteria": [{"type": "ANNIHILATE", "slot": 1}]
+  },
+  "team": {"power": 20, "speed": 20},
+  "bots": [
+    {
+      "slot": 2,
+      "name": "Raiders",
+      "power": 1,
+      "health": 20,
+      "speed": 10,
+      "trees": [{"name": "raider", "owner": null, "root": {"kind": "OUTPUT", "action": "DEFEND"}}],
+      "startTree": "raider"
+    }
+  ],
+  "solution": {
+    "name": "attack",
+    "owner": null,
+    "root": {
+      "kind": "POSITION",
+      "inputs": [{"name": "ENEMY_ADJACENT_POS", "args": []}],
+      "children": [
+        {"kind": "OUTPUT", "action": "ATTACK_LEFT"},
+        {"kind": "OUTPUT", "action": "ATTACK_RIGHT"},
+        {"kind": "OUTPUT", "action": "ATTACK_UP"},
+        {"kind": "OUTPUT", "action": "ATTACK_DOWN"},
+        {"kind": "OUTPUT", "action": "DEFEND"}
+      ]
+    }
+  }
+}

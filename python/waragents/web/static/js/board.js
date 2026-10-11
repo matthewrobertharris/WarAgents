@@ -2,6 +2,8 @@
 //
 // data has width, height, dirt and food (rows by y, with null for a hole) and plants. It can also
 // have agents (a running game) or starts (a map's start slots). Row y = 0 is drawn at the bottom.
+// A TRAVEL_TO win condition in data.criteria (a map's objects, or a game's "TRAVEL_TO team x y"
+// strings) is drawn as a flag on its tile.
 
 import { slotColour } from "./colours.js";
 
@@ -10,6 +12,15 @@ const HIGH = [138, 98, 64];
 
 function mix(a, b, t) {
   return a.map((v, i) => Math.round(v + (b[i] - v) * t));
+}
+
+// The tiles TRAVEL_TO win conditions point at.
+function flags(data) {
+  return (data.criteria ?? []).map((c) => {
+    if (typeof c === "object") return c.type === "TRAVEL_TO" ? { x: c.x, y: c.y } : null;
+    const match = /^TRAVEL_TO .* (\d+) (\d+)$/.exec(c);
+    return match ? { x: Number(match[1]), y: Number(match[2]) } : null;
+  }).filter(Boolean);
 }
 
 function cssVar(name) {
@@ -61,6 +72,23 @@ export function drawBoard(canvas, data, options = {}) {
     ctx.fillStyle = "#b2f2bb";
     ctx.beginPath();
     ctx.arc(cx, cy, Math.max(1, size * 0.06), 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  for (const flag of flags(data)) {
+    const x = flag.x * size;
+    const top = py(flag.y);
+    ctx.strokeStyle = "#343a40";
+    ctx.lineWidth = Math.max(1, size * 0.06);
+    ctx.beginPath();
+    ctx.moveTo(x + size * 0.3, top + size * 0.85);
+    ctx.lineTo(x + size * 0.3, top + size * 0.15);
+    ctx.stroke();
+    ctx.fillStyle = "#e03131";
+    ctx.beginPath();
+    ctx.moveTo(x + size * 0.3, top + size * 0.15);
+    ctx.lineTo(x + size * 0.78, top + size * 0.3);
+    ctx.lineTo(x + size * 0.3, top + size * 0.46);
     ctx.fill();
   }
 

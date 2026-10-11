@@ -1,0 +1,9 @@
+{
+  "name": "TestBed",
+  "owner": "matt",
+  "root": {
+    "kind": "BOOLEAN",
+    "inputs": [{"name": "HAS_FOOD", "args": ["CURRENT"]}],
+    "children": [{"kind": "OUTPUT", "action": "MOVE_LEFT"}, null]
+  }
+}

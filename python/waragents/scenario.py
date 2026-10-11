@@ -26,7 +26,11 @@ the map or trees are edited later. Each team carries the trees it can switch to.
     {"name": "...", "created": "2026-10-02T14:03:00", "seed": 3, "mapId": "skirmish", "map": {...},
      "teams": [{"slot": 1, "name": "green", "colour": "#2f9e44", "player": null,
                 "speed": 10, "health": 100, "power": 10, "startTree": "graze", "trees": [...]}],
-     "criteria": [...]}
+                (a team can also have "startHealth" below its health, to start hungry)
+     "criteria": [...], "maxTurns": 2000, "rules": 1}
+
+maxTurns ends the game when it's reached (see World._finish_at_time_limit), and rules is the
+RULES_VERSION the game was played under. Both are optional, for records saved before they existed.
 """
 
 from __future__ import annotations
@@ -36,15 +40,20 @@ from dataclasses import dataclass, fields, is_dataclass
 from typing import Any
 
 from .actions import ACTION_ARGS, Action, Activity, make_action
-from .criteria import (Annihilate, CollectFood, Criterion, FindThing, LevelUp, MapDirt,
-                       PerformAction, SurviveTurns, TravelTo)
+from .criteria import (Annihilate, CollectFood, Criterion, EatFood, FindThing, LevelUp, MapDirt,
+                       PerformAction, SurviveTurns, TeamSize, TravelTo)
 from .inputs import INPUTS, Input
 from .mapfile import parse_map
 from .positions import SIMPLE_POSITIONS, Position, XYValue
+from .progression import action_cost, input_cost
 from .tree import NODE_SHAPES, Node, NodeKind, Tree
 from .world import MAX_DIRT, MAX_FOOD, MODES, XY, Agent, Plant, Player, Tile, World
 
 ACTIONS = {a.value for a in Activity}
+
+# The version of the rules a game record was played under. Bump it whenever a change to the engine
+# or to progression.py would make an old game play out differently, so old replays can be flagged.
+RULES_VERSION = 1
 
 # Each criterion's fields, in order. "slot" is a team's start slot and "x"/"y" a tile on the map.
 CRITERIA: dict[str, tuple[tuple[str, str], ...]] = {
@@ -56,6 +65,8 @@ CRITERIA: dict[str, tuple[tuple[str, str], ...]] = {
     "TRAVEL_TO": (("slot", "slot"), ("x", "x"), ("y", "y")),
     "PERFORM_ACTION": (("slot", "slot"), ("action", "action"), ("times", "int")),
     "FIND_THING": (("thing", "thing"),),
+    "EAT_FOOD": (("slot", "slot"), ("amount", "int")),
+    "TEAM_SIZE": (("slot", "slot"), ("size", "int")),
 }
 
 
@@ -280,10 +291,38 @@ def _walk(node: Any):
             stack.extend(node.get("children") or [])
 
 
-def tree_references(data: dict[str, Any]) -> set[str]:
-    """The names of the trees this tree can switch to with CHANGE_TREE."""
-    return {node["args"][0] for node in _walk(data.get("root"))
-            if node.get("action") == "CHANGE_TREE" and node.get("args")}
+def tree_references(data: dict[str, Any]) -> list[str]:
+    """The names of the trees this tree can switch to with CHANGE_TREE, sorted."""
+    return sorted({node["args"][0] for node in _walk(data.get("root"))
+                   if node.get("action") == "CHANGE_TREE" and node.get("args")})
+
+
+def tree_cost(data: dict[str, Any]) -> int:
+    """The points a tree costs: what each decision's inputs cost plus a point per action.
+    Empty slots cost nothing, so this works on unfinished trees too."""
+    total = 0
+    for node in _walk(data.get("root") if isinstance(data, dict) else None):
+        if node.get("kind") == "OUTPUT":
+            total += action_cost(node.get("action"))
+        for item in node.get("inputs") or []:
+            if isinstance(item, dict):
+                total += input_cost(item.get("name"))
+    return total
+
+
+def team_cost(start: dict[str, Any], available: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    """What a team starting with this tree costs: the tree plus every tree it can switch to with
+    CHANGE_TREE, each counted once. available maps tree names to the trees the team can use.
+    Returns {"cost": total, "trees": {name: cost}}."""
+    costs: dict[str, int] = {}
+    queue = [start]
+    while queue:
+        tree = queue.pop()
+        if tree["name"] in costs:
+            continue
+        costs[tree["name"]] = tree_cost(tree)
+        queue.extend(available[name] for name in tree_references(tree) if name in available)
+    return {"cost": sum(costs.values()), "trees": costs}
 
 
 def rename_trees(data: dict[str, Any], names: dict[str, str]) -> dict[str, Any]:
@@ -470,9 +509,14 @@ def check_game(game: Any) -> list[str]:
         for stat in ("speed", "health", "power"):
             if not _is_int(team.get(stat)) or team[stat] < 1:
                 problems.append(f"{label} needs a {stat} of at least 1")
+        if team.get("startHealth") is not None and (not _is_int(team["startHealth"]) or team["startHealth"] < 1):
+            problems.append(f"{label}'s startHealth must be a whole number of at least 1")
         problems.extend(_check_team_trees(team, label))
     if not isinstance(game.get("criteria"), list):
         problems.append("criteria must be a list")
+    for name in ("maxTurns", "rules"):
+        if game.get(name) is not None and (not _is_int(game[name]) or game[name] < 1):
+            problems.append(f"{name} must be a whole number of at least 1")
     return problems
 
 
@@ -492,7 +536,7 @@ def _check_team_trees(team: dict[str, Any], label: str) -> list[str]:
         problems.append(f"{label} starts with tree '{team.get('startTree')}', which it doesn't have")
     for tree in trees:
         if isinstance(tree, dict):
-            for missing in sorted(tree_references(tree) - names):
+            for missing in sorted(set(tree_references(tree)) - names):
                 problems.append(f"{label}: '{tree.get('name')}' switches to tree '{missing}', "
                                 "which the team doesn't have")
     return problems
@@ -525,10 +569,17 @@ def build_world(game: dict[str, Any]) -> World:
         player = Player(team["name"], team["health"], team["speed"], team["power"], trees,
                         data["maxAgents"])
         player.colour = team.get("colour")
+        player.slot = team["slot"]
+        player.account = team.get("player")
         for start in data["starts"]:
             if start["slot"] == team["slot"]:
-                player.add_agent(Agent("", XY(start["x"], start["y"]), player, team["speed"],
-                                       team["health"], team["power"], start_tree, 0))
+                agent = Agent("", XY(start["x"], start["y"]), player, team["speed"],
+                              team["health"], team["power"], start_tree, 0)
+                if team.get("startHealth") is not None:
+                    # Tutorials can start an agent hungry: below its maximum health.
+                    agent.health = team["startHealth"]
+                    agent.history[0] = agent.snapshot(0)
+                player.add_agent(agent)
         players.append(player)
         by_slot[team["slot"]] = player
     agents = [a for p in players for a in p.agents]
@@ -541,7 +592,8 @@ def build_world(game: dict[str, Any]) -> World:
         criterion = criterion_from_json(item, by_slot, things)
         if criterion is not None:
             criteria.append(criterion)
-    return World(width, height, tiles, players, plants, criteria, data["mode"], game["seed"])
+    return World(width, height, tiles, players, plants, criteria, data["mode"], game["seed"],
+                 game.get("maxTurns"))
 
 
 def criterion_from_json(data: dict[str, Any], by_slot: dict[int, Player],
@@ -565,6 +617,10 @@ def criterion_from_json(data: dict[str, Any], by_slot: dict[int, Player],
             return TravelTo(player, XY(data["x"], data["y"]))
         case "PERFORM_ACTION":
             return PerformAction(player, Activity(data["action"]), data["times"])
+        case "EAT_FOOD":
+            return EatFood(player, data["amount"])
+        case "TEAM_SIZE":
+            return TeamSize(player, data["size"])
         case "FIND_THING":
             thing = things.get(data["thing"])
             if thing is None:

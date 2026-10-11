@@ -1,0 +1,58 @@
+{
+  "name": "Climbing costs",
+  "track": "Food",
+  "order": 2,
+  "level": "Beginner",
+  "maxTurns": 40,
+  "recommendedAfter": ["food-1"],
+  "brief": "Stepping up or down a height of 2 costs a health point, and an agent won't make a move that would leave it with no health. Your agent is small (3 health) and the flag is on top of a steep hill. Every tile has food, so eat whenever you're low.",
+  "goal": "Climb to the flag at x=7, y=5.",
+  "hints": ["Compare SELF_HEALTH with VALUE 2: if it's less, EAT; otherwise MOVE_RIGHT."],
+  "concepts": ["SELF_HEALTH", "VALUE", "climbing"],
+  "map": {
+    "name": "Climbing costs",
+    "mode": "CLICK",
+    "maxAgents": 10,
+    "dirt": [
+      [0, 0, 0, 0, 0, 0, 0, 2, 0, 0],
+      [0, 0, 0, 0, 0, 0, 2, 4, 2, 0],
+      [0, 0, 0, 0, 0, 2, 4, 6, 4, 2],
+      [0, 0, 0, 0, 2, 4, 6, 8, 6, 4],
+      [0, 0, 0, 2, 4, 6, 8, 10, 8, 6],
+      [0, 0, 2, 4, 6, 8, 10, 12, 10, 8],
+      [0, 0, 0, 2, 4, 6, 8, 10, 8, 6],
+      [0, 0, 0, 0, 2, 4, 6, 8, 6, 4],
+      [0, 0, 0, 0, 0, 2, 4, 6, 4, 2],
+      [0, 0, 0, 0, 0, 0, 2, 4, 2, 0]
+    ],
+    "food": [
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
+    ],
+    "plants": [],
+    "starts": [{"slot": 1, "x": 1, "y": 5}],
+    "criteria": [{"type": "TRAVEL_TO", "slot": 1, "x": 7, "y": 5}]
+  },
+  "team": {"health": 3},
+  "solution": {
+    "name": "climbing-costs",
+    "owner": null,
+    "root": {
+      "kind": "NUMERIC",
+      "inputs": [{"name": "SELF_HEALTH", "args": []}, {"name": "VALUE", "args": [2]}],
+      "children": [
+        {"kind": "OUTPUT", "action": "EAT"},
+        {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+        {"kind": "OUTPUT", "action": "MOVE_RIGHT"}
+      ]
+    }
+  }
+}

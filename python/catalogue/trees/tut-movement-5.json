@@ -1,0 +1,155 @@
+{
+  "name": "tut-movement-5",
+  "owner": "matt",
+  "root": {
+    "kind": "BOOLEAN",
+    "inputs": [{"name": "VALID_POSITION", "args": ["PREVIOUS"]}],
+    "children": [
+      {
+        "kind": "POSITION",
+        "inputs": [{"name": "DIRECTION_TO", "args": ["PREVIOUS"]}],
+        "children": [
+          {
+            "kind": "BOOLEAN",
+            "inputs": [{"name": "VALID_POSITION", "args": ["RIGHT"]}],
+            "children": [
+              {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+              {
+                "kind": "BOOLEAN",
+                "inputs": [{"name": "VALID_POSITION", "args": ["UP"]}],
+                "children": [
+                  {"kind": "OUTPUT", "action": "MOVE_UP"},
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "VALID_POSITION", "args": ["DOWN"]}],
+                    "children": [
+                      {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                      {"kind": "OUTPUT", "action": "CONFUSED"}
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "BOOLEAN",
+            "inputs": [{"name": "VALID_POSITION", "args": ["LEFT"]}],
+            "children": [
+              {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+              {
+                "kind": "BOOLEAN",
+                "inputs": [{"name": "VALID_POSITION", "args": ["UP"]}],
+                "children": [
+                  {"kind": "OUTPUT", "action": "MOVE_UP"},
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "VALID_POSITION", "args": ["DOWN"]}],
+                    "children": [
+                      {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                      {"kind": "OUTPUT", "action": "CONFUSED"}
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "BOOLEAN",
+            "inputs": [{"name": "VALID_POSITION", "args": ["LEFT"]}],
+            "children": [
+              {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+              {
+                "kind": "BOOLEAN",
+                "inputs": [{"name": "VALID_POSITION", "args": ["RIGHT"]}],
+                "children": [
+                  {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "VALID_POSITION", "args": ["DOWN"]}],
+                    "children": [
+                      {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                      {"kind": "OUTPUT", "action": "CONFUSED"}
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "BOOLEAN",
+            "inputs": [{"name": "VALID_POSITION", "args": ["LEFT"]}],
+            "children": [
+              {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+              {
+                "kind": "BOOLEAN",
+                "inputs": [{"name": "VALID_POSITION", "args": ["UP"]}],
+                "children": [
+                  {"kind": "OUTPUT", "action": "MOVE_UP"},
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "VALID_POSITION", "args": ["RIGHT"]}],
+                    "children": [
+                      {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                      {"kind": "OUTPUT", "action": "CONFUSED"}
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "BOOLEAN",
+            "inputs": [{"name": "VALID_POSITION", "args": ["LEFT"]}],
+            "children": [
+              {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+              {
+                "kind": "BOOLEAN",
+                "inputs": [{"name": "VALID_POSITION", "args": ["UP"]}],
+                "children": [
+                  {"kind": "OUTPUT", "action": "MOVE_UP"},
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "VALID_POSITION", "args": ["DOWN"]}],
+                    "children": [
+                      {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                      {"kind": "OUTPUT", "action": "CONFUSED"}
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "BOOLEAN",
+        "inputs": [{"name": "VALID_POSITION", "args": ["LEFT"]}],
+        "children": [
+          {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+          {
+            "kind": "BOOLEAN",
+            "inputs": [{"name": "VALID_POSITION", "args": ["RIGHT"]}],
+            "children": [
+              {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+              {
+                "kind": "BOOLEAN",
+                "inputs": [{"name": "VALID_POSITION", "args": ["DOWN"]}],
+                "children": [
+                  {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "VALID_POSITION", "args": ["UP"]}],
+                    "children": [
+                      {"kind": "OUTPUT", "action": "MOVE_UP"},
+                      {"kind": "OUTPUT", "action": "CONFUSED"}
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

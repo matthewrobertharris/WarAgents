@@ -1,0 +1,814 @@
+{
+  "name": "The U-bend",
+  "track": "Movement",
+  "order": 6,
+  "level": "Advanced",
+  "maxTurns": 150,
+  "recommendedAfter": ["movement-5"],
+  "brief": "The flag is inside a U-shaped wall that opens away from you. Heading straight for it gets you stuck, and following the wall forever never reaches it. Combine both: head for the flag, follow the wall when it blocks you, and stop following once you're level with the flag again. A tree can switch to another of your trees with CHANGE_TREE, so each tree can do one job. SECONDARY can remember where you hit the wall.",
+  "goal": "Reach the flag inside the U at x=6, y=5.",
+  "hints": ["Make two trees: one that heads for the flag, one that follows the wall.", "When the way to the flag is blocked: SET_SECONDARY CURRENT, then CHANGE_TREE to your wall-following tree.", "In the wall-following tree, when SELF_Y equals GET_Y PRIMARY and you're further right than SECONDARY, CLEAR_SECONDARY and change back."],
+  "concepts": ["CHANGE_TREE", "SET_SECONDARY", "CLEAR_SECONDARY", "POSITION_MATCH"],
+  "map": {
+    "name": "The U-bend",
+    "mode": "CLICK",
+    "maxAgents": 10,
+    "dirt": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, null, null, null, null, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, null, null, null, null, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "food": [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, null, null, null, null, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, null, null, null, null, null, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    "plants": [],
+    "starts": [{"slot": 1, "x": 1, "y": 5}],
+    "criteria": [{"type": "TRAVEL_TO", "slot": 1, "x": 6, "y": 5}]
+  },
+  "solution": {
+    "name": "u-bend-go",
+    "owner": null,
+    "root": {
+      "kind": "BOOLEAN",
+      "inputs": [{"name": "VALID_POSITION", "args": ["PRIMARY"]}],
+      "children": [
+        {
+          "kind": "NUMERIC",
+          "inputs": [{"name": "SELF_X", "args": []}, {"name": "GET_X", "args": ["PRIMARY"]}],
+          "children": [
+            {
+              "kind": "BOOLEAN",
+              "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+              "children": [
+                {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                {
+                  "kind": "BOOLEAN",
+                  "inputs": [{"name": "VALID_POSITION", "args": ["SECONDARY"]}],
+                  "children": [
+                    {"kind": "OUTPUT", "action": "CHANGE_TREE", "args": ["u-bend-follow"]},
+                    {"kind": "OUTPUT", "action": "SET_SECONDARY", "args": ["CURRENT"]}
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "NUMERIC",
+              "inputs": [{"name": "SELF_Y", "args": []}, {"name": "GET_Y", "args": ["PRIMARY"]}],
+              "children": [
+                {
+                  "kind": "BOOLEAN",
+                  "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                  "children": [
+                    {"kind": "OUTPUT", "action": "MOVE_UP"},
+                    {
+                      "kind": "BOOLEAN",
+                      "inputs": [{"name": "VALID_POSITION", "args": ["SECONDARY"]}],
+                      "children": [
+                        {"kind": "OUTPUT", "action": "CHANGE_TREE", "args": ["u-bend-follow"]},
+                        {"kind": "OUTPUT", "action": "SET_SECONDARY", "args": ["CURRENT"]}
+                      ]
+                    }
+                  ]
+                },
+                {"kind": "OUTPUT", "action": "DEFEND"},
+                {
+                  "kind": "BOOLEAN",
+                  "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                  "children": [
+                    {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                    {
+                      "kind": "BOOLEAN",
+                      "inputs": [{"name": "VALID_POSITION", "args": ["SECONDARY"]}],
+                      "children": [
+                        {"kind": "OUTPUT", "action": "CHANGE_TREE", "args": ["u-bend-follow"]},
+                        {"kind": "OUTPUT", "action": "SET_SECONDARY", "args": ["CURRENT"]}
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "BOOLEAN",
+              "inputs": [{"name": "IN_BOUNDS", "args": ["LEFT"]}],
+              "children": [
+                {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                {
+                  "kind": "BOOLEAN",
+                  "inputs": [{"name": "VALID_POSITION", "args": ["SECONDARY"]}],
+                  "children": [
+                    {"kind": "OUTPUT", "action": "CHANGE_TREE", "args": ["u-bend-follow"]},
+                    {"kind": "OUTPUT", "action": "SET_SECONDARY", "args": ["CURRENT"]}
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {"kind": "OUTPUT", "action": "SET_PRIMARY", "args": [{"x": 6, "y": 5}]}
+      ]
+    }
+  },
+  "solutionTrees": [
+    {
+      "name": "u-bend-follow",
+      "owner": null,
+      "root": {
+        "kind": "BOOLEAN",
+        "inputs": [{"name": "VALID_POSITION", "args": ["SECONDARY"]}],
+        "children": [
+          {
+            "kind": "NUMERIC",
+            "inputs": [{"name": "SELF_Y", "args": []}, {"name": "GET_Y", "args": ["PRIMARY"]}],
+            "children": [
+              {
+                "kind": "BOOLEAN",
+                "inputs": [{"name": "POSITION_MATCH", "args": ["CURRENT", "SECONDARY"]}],
+                "children": [
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                    "children": [
+                      {"kind": "OUTPUT", "action": "MOVE_UP"},
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                          {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "VALID_POSITION", "args": ["PREVIOUS"]}],
+                    "children": [
+                      {
+                        "kind": "POSITION",
+                        "inputs": [{"name": "DIRECTION_TO", "args": ["PREVIOUS"]}],
+                        "children": [
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_UP"},
+                                      {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_UP"},
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["LEFT"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                                      {"kind": "OUTPUT", "action": "MOVE_RIGHT"}
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "IN_BOUNDS", "args": ["LEFT"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                                      {"kind": "OUTPUT", "action": "MOVE_UP"}
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_UP"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["LEFT"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                                      {"kind": "OUTPUT", "action": "MOVE_DOWN"}
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_UP"},
+                                      {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_UP"},
+                                  {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "kind": "NUMERIC",
+                "inputs": [{"name": "SELF_X", "args": []}, {"name": "GET_X", "args": ["SECONDARY"]}],
+                "children": [
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "POSITION_MATCH", "args": ["CURRENT", "SECONDARY"]}],
+                    "children": [
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_UP"},
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                              {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "VALID_POSITION", "args": ["PREVIOUS"]}],
+                        "children": [
+                          {
+                            "kind": "POSITION",
+                            "inputs": [{"name": "DIRECTION_TO", "args": ["PREVIOUS"]}],
+                            "children": [
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                                      {
+                                        "kind": "BOOLEAN",
+                                        "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                                        "children": [
+                                          {"kind": "OUTPUT", "action": "MOVE_UP"},
+                                          {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_UP"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["LEFT"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                                      {
+                                        "kind": "BOOLEAN",
+                                        "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                                        "children": [
+                                          {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                                          {"kind": "OUTPUT", "action": "MOVE_RIGHT"}
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["LEFT"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                                      {
+                                        "kind": "BOOLEAN",
+                                        "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                                        "children": [
+                                          {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                                          {"kind": "OUTPUT", "action": "MOVE_UP"}
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_UP"},
+                                      {
+                                        "kind": "BOOLEAN",
+                                        "inputs": [{"name": "IN_BOUNDS", "args": ["LEFT"]}],
+                                        "children": [
+                                          {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                                          {"kind": "OUTPUT", "action": "MOVE_DOWN"}
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                                      {
+                                        "kind": "BOOLEAN",
+                                        "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                                        "children": [
+                                          {"kind": "OUTPUT", "action": "MOVE_UP"},
+                                          {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_UP"},
+                                      {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "POSITION_MATCH", "args": ["CURRENT", "SECONDARY"]}],
+                    "children": [
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_UP"},
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                              {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "VALID_POSITION", "args": ["PREVIOUS"]}],
+                        "children": [
+                          {
+                            "kind": "POSITION",
+                            "inputs": [{"name": "DIRECTION_TO", "args": ["PREVIOUS"]}],
+                            "children": [
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                                      {
+                                        "kind": "BOOLEAN",
+                                        "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                                        "children": [
+                                          {"kind": "OUTPUT", "action": "MOVE_UP"},
+                                          {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_UP"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["LEFT"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                                      {
+                                        "kind": "BOOLEAN",
+                                        "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                                        "children": [
+                                          {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                                          {"kind": "OUTPUT", "action": "MOVE_RIGHT"}
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["LEFT"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                                      {
+                                        "kind": "BOOLEAN",
+                                        "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                                        "children": [
+                                          {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                                          {"kind": "OUTPUT", "action": "MOVE_UP"}
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_UP"},
+                                      {
+                                        "kind": "BOOLEAN",
+                                        "inputs": [{"name": "IN_BOUNDS", "args": ["LEFT"]}],
+                                        "children": [
+                                          {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                                          {"kind": "OUTPUT", "action": "MOVE_DOWN"}
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                                      {
+                                        "kind": "BOOLEAN",
+                                        "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                                        "children": [
+                                          {"kind": "OUTPUT", "action": "MOVE_UP"},
+                                          {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_UP"},
+                                      {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {"kind": "OUTPUT", "action": "CLEAR_SECONDARY"}
+                ]
+              },
+              {
+                "kind": "BOOLEAN",
+                "inputs": [{"name": "POSITION_MATCH", "args": ["CURRENT", "SECONDARY"]}],
+                "children": [
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                    "children": [
+                      {"kind": "OUTPUT", "action": "MOVE_UP"},
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                          {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "BOOLEAN",
+                    "inputs": [{"name": "VALID_POSITION", "args": ["PREVIOUS"]}],
+                    "children": [
+                      {
+                        "kind": "POSITION",
+                        "inputs": [{"name": "DIRECTION_TO", "args": ["PREVIOUS"]}],
+                        "children": [
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_UP"},
+                                      {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_UP"},
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["LEFT"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                                      {"kind": "OUTPUT", "action": "MOVE_RIGHT"}
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "IN_BOUNDS", "args": ["LEFT"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                                      {"kind": "OUTPUT", "action": "MOVE_UP"}
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_UP"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["LEFT"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_LEFT"},
+                                      {"kind": "OUTPUT", "action": "MOVE_DOWN"}
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                                  {
+                                    "kind": "BOOLEAN",
+                                    "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                                    "children": [
+                                      {"kind": "OUTPUT", "action": "MOVE_UP"},
+                                      {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "BOOLEAN",
+                        "inputs": [{"name": "IN_BOUNDS", "args": ["DOWN"]}],
+                        "children": [
+                          {"kind": "OUTPUT", "action": "MOVE_DOWN"},
+                          {
+                            "kind": "BOOLEAN",
+                            "inputs": [{"name": "IN_BOUNDS", "args": ["RIGHT"]}],
+                            "children": [
+                              {"kind": "OUTPUT", "action": "MOVE_RIGHT"},
+                              {
+                                "kind": "BOOLEAN",
+                                "inputs": [{"name": "IN_BOUNDS", "args": ["UP"]}],
+                                "children": [
+                                  {"kind": "OUTPUT", "action": "MOVE_UP"},
+                                  {"kind": "OUTPUT", "action": "MOVE_LEFT"}
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {"kind": "OUTPUT", "action": "CHANGE_TREE", "args": ["u-bend-go"]}
+        ]
+      }
+    }
+  ]
+}

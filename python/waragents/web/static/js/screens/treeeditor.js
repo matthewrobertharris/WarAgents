@@ -1,16 +1,24 @@
 // Editing one decision tree (#/trees/<id>). The tree is the collapsible outline from
 // treeview.js with a dropdown for every choice on each row:
-//   - every row has a node type: an empty slot, DO (an action), BOOLEAN, NUMERIC or POSITION
-//   - a DO row picks an action, plus its argument (CHANGE_TREE's tree, SET_PRIMARY's position)
+//   - every row's first dropdown is an empty slot, an action (picking one makes the node a DO
+//     with that action), or BOOLEAN, NUMERIC or POSITION
+//   - a DO row then takes the action's argument, if any (CHANGE_TREE's tree, SET_PRIMARY's position)
 //   - a BOOLEAN row picks a boolean input and has true/false branches
 //   - a NUMERIC row picks two numeric inputs and branches on how the first compares to the second
 //   - a POSITION row picks a position input and branches on which way that position is
 //   - an input's arguments are a position, a whole number, an action or a tree name
-// Only what fits a slot is offered, but nothing is held back yet (by level or points, say).
-// Changes save themselves, and Ctrl+Z / Ctrl+Y undo and redo.
+// Each row's ⋯ menu can also restructure the tree: insert a decision above a node (the node
+// becomes its first branch), swap a branch with its siblings, replace a decision with one of its
+// branches, and cut, copy and paste branches (between trees too).
+// Only what fits a slot is offered. Nothing is locked, but every input and action costs points,
+// and the side panel shows the tree's cost against the player's budget, which grows with their
+// level. Changes save themselves, and Ctrl+Z / Ctrl+Y undo and redo. Someone else's tree (a default tree,
+// for a player who isn't an admin) opens read-only: they can try changes but not save them.
 
 import { get, put, reference } from "../api.js";
+import { teamCost, treeCost, usableTrees } from "../cost.js";
 import { fill, h, showError } from "../dom.js";
+import { isAdmin, loadUser, updateUser, user } from "../session.js";
 import { countNodes, fromJson, newUi, pathKey, treeView } from "../treeview.js";
 
 const KINDS = [
@@ -39,6 +47,7 @@ export async function mount(root, treeId, query) {
     get(`/api/catalogue/trees/${treeId}`), reference(), get("/api/catalogue/trees"), get("/api/catalogue/players"),
   ]);
   const { id, problems = [], ...tree } = saved;
+  const canSave = isAdmin() || tree.owner === user().id;
   const inputs = Object.fromEntries(ref.inputs.map((i) => [i.name, i]));
   const actions = Object.fromEntries(ref.actions.map((a) => [a.name, a]));
   const positions = ref.positions.filter((p) => !p.startsWith("XY_VALUE"));
@@ -65,18 +74,24 @@ export async function mount(root, treeId, query) {
   const redoButton = h("button", { class: "small", title: "Ctrl+Y", onclick: redo }, "Redo");
   const outline = h("div", { class: "tree-editor" });
   const details = h("section", { class: "card" });
+  const costCard = h("section", { class: "card" });
   const problemsCard = h("section", { class: "card" });
   const clipText = h("span", { class: "hint" });
   root.append(
     h("div", { class: "page-head" },
-      h("div", {}, title, h("p", { class: "hint" }, "Changes save automatically. ", statusText)),
-      h("div", { class: "head-actions" }, h("a", { class: "button", href: "#/trees" }, "All trees"))),
+      h("div", {}, title, h("p", { class: "hint" }, canSave ? "Changes save automatically. " : "", statusText)),
+      h("div", { class: "head-actions" },
+        query.get("tutorial") ? h("a", { class: "button primary", href: `#/training/${query.get("tutorial")}` }, "Back to the tutorial") : null,
+        h("a", { class: "button", href: "#/trees" }, "All trees"))),
+    canSave ? "" : h("p", { class: "banner note readonly" },
+      "This is a default tree, so you can look and try changes but they won't be saved. ",
+      "Duplicate it on the trees screen to make a copy of your own."),
     h("div", { class: "layout tree-layout" },
       h("section", { class: "card" },
         h("div", { class: "controls" }, undoButton, redoButton, clipText,
-          h("span", { class: "hint status" }, "Each row's ⋯ menu has focus, copy, paste and clear.")),
+          h("span", { class: "hint status" }, "Each row's ⋯ menu can insert a decision above it, swap branches, and cut, copy and paste.")),
         outline),
-      h("aside", { class: "side" }, details, problemsCard)));
+      h("aside", { class: "side" }, details, costCard, problemsCard)));
 
   // ---- the tree as data --------------------------------------------------------------
 
@@ -152,7 +167,8 @@ export async function mount(root, treeId, query) {
 
   function scheduleSave() {
     ed.dirty = true;
-    setStatus("Unsaved changes");
+    setStatus(canSave ? "Unsaved changes" : "Read-only: changes aren't saved");
+    if (!canSave) return;
     clearTimeout(ed.saveTimer);
     ed.saveTimer = setTimeout(save, 600);
   }
@@ -173,6 +189,8 @@ export async function mount(root, treeId, query) {
       setStatus(ed.dirty ? "Unsaved changes" : "Saved");
       renderOutline();
       renderProblems();
+      // Saving can change whether your default tree is ready, which the home screen shows.
+      if (user().startTree === ed.tree.name) loadUser();
     } catch (e) {
       ed.dirty = true;
       setStatus(`Not saved: ${e.message}`, true);
@@ -216,9 +234,10 @@ export async function mount(root, treeId, query) {
     });
   }
 
+  // Picking an action in a row's first dropdown makes the node a DO with that action, in one go.
   function setAction(path, name) {
     change("action", () => {
-      setAt(path, name ? withArgs({ kind: "OUTPUT", action: name }, actions[name].args) : { kind: "OUTPUT", action: null });
+      setAt(path, withArgs({ kind: "OUTPUT", action: name }, actions[name].args));
     });
   }
 
@@ -244,6 +263,76 @@ export async function mount(root, treeId, query) {
     change("paste", () => setAt(path, structuredClone(clipboard)));
   }
 
+  // Copy a branch and empty its slot, so it can be pasted somewhere else.
+  function cutAt(path) {
+    clipboard = structuredClone(getAt(path));
+    renderClipboard();
+    change("cut", () => setAt(path, null));
+  }
+
+  // ---- restructuring -------------------------------------------------------------------
+  //
+  // Which branches are open (and which one is focused) is remembered by path, so when a branch
+  // moves, its open/closed state moves with it. move(path) gives a node's new path, or null if
+  // the node is gone.
+
+  function remapUi(move) {
+    const parse = (key) => key.split(".").slice(1).map(Number);
+    const open = new Map();
+    for (const [key, value] of ed.ui.open) {
+      const moved = move(parse(key));
+      if (moved) open.set(pathKey(moved), value);
+    }
+    ed.ui.open = open;
+    if (ed.ui.focus) {
+      const moved = move(parse(ed.ui.focus));
+      ed.ui.focus = moved ? pathKey(moved) : null;
+    }
+  }
+
+  const startsWith = (p, prefix) => prefix.every((v, i) => p[i] === v);
+
+  // Put a new decision above a node. The node, with everything under it, becomes the decision's
+  // first branch (true, < or left), and its inputs are left to choose.
+  function insertAbove(path, kind) {
+    change("insert", () => {
+      const shape = ref.nodes[kind];
+      setAt(path, {
+        kind,
+        inputs: Array.from({ length: shape.count }, () => null),
+        children: shape.branches.map((_, i) => (i === 0 ? getAt(path) : null)),
+      });
+      remapUi((p) => (startsWith(p, path) ? [...path, 0, ...p.slice(path.length)] : p));
+      ed.ui.open.set(pathKey(path), true);
+    });
+  }
+
+  // Swap two branches of the decision at parentPath, everything under them included.
+  function swapBranches(parentPath, i, j) {
+    change("swap", () => {
+      const parent = getAt(parentPath);
+      [parent.children[i], parent.children[j]] = [parent.children[j], parent.children[i]];
+      const depth = parentPath.length;
+      remapUi((p) => {
+        if (!startsWith(p, parentPath) || p.length <= depth || (p[depth] !== i && p[depth] !== j)) return p;
+        return [...parentPath, p[depth] === i ? j : i, ...p.slice(depth + 1)];
+      });
+    });
+  }
+
+  // Replace a decision with one of its branches, dropping the decision and its other branches.
+  function keepBranch(path, index) {
+    change("unwrap", () => {
+      setAt(path, getAt(path).children[index]);
+      const depth = path.length;
+      remapUi((p) => {
+        if (!startsWith(p, path)) return p;           // somewhere else in the tree
+        if (p.length === depth) return null;          // the decision itself, now gone
+        return p[depth] === index ? [...path, ...p.slice(depth + 1)] : null;  // the kept branch moves up
+      });
+    });
+  }
+
   // ---- rows ----------------------------------------------------------------------------
 
   function select(options, value, onchange, extra = {}) {
@@ -252,25 +341,27 @@ export async function mount(root, treeId, query) {
 
   const option = (value, text, title) => h("option", { value, title }, text);
 
+  // A row's first dropdown says what the node does: an action (so DO and its action are one
+  // pick), or BOOLEAN, NUMERIC or POSITION, whose inputs are chosen in the dropdowns after it.
   function kindSelect(path, node) {
     const kind = node?.kind ?? "";
-    return select([
-      option("", "empty", "An empty slot. The tree can't be played until it's filled."),
-      KINDS.map(([value, text, doc]) => option(value, text, doc)),
-    ], kind, (value) => setKind(path, value), {
-      class: `kind-select ${kind || "EMPTY"}`,
-      title: KINDS.find(([value]) => value === kind)?.[2] ?? "Choose what this node does",
-    });
-  }
-
-  function actionSelect(path, node) {
+    const current = kind === "OUTPUT" ? `OUTPUT:${node.action ?? ""}` : kind;
     const known = new Set(ACTION_GROUPS.flatMap(([, names]) => names));
     const others = ref.actions.map((a) => a.name).filter((n) => !known.has(n));
+    const doOption = (n) => option(`OUTPUT:${n}`, n, actions[n]?.doc);
     return select([
-      node.action ? null : option("", "choose an action…"),
-      ACTION_GROUPS.map(([label, names]) => h("optgroup", { label }, names.filter((n) => actions[n]).map((n) => option(n, n)))),
-      others.length ? h("optgroup", { label: "Other" }, others.map((n) => option(n, n))) : null,
-    ], node.action, (value) => setAction(path, value), { class: node.action ? "" : "unset" });
+      option("", "empty", "An empty slot. The tree can't be played until it's filled."),
+      kind === "OUTPUT" && !node.action ? option("OUTPUT:", "DO: choose an action…") : null,
+      ACTION_GROUPS.map(([label, names]) => h("optgroup", { label: `DO · ${label}` },
+        names.filter((n) => actions[n]).map(doOption))),
+      others.length ? h("optgroup", { label: "DO · Other" }, others.map(doOption)) : null,
+      h("optgroup", { label: "Decisions" },
+        KINDS.filter(([k]) => k !== "OUTPUT").map(([value, text, doc]) => option(value, text, doc))),
+    ], current, (value) => (value.startsWith("OUTPUT:") ? setAction(path, value.slice(7)) : setKind(path, value || null)), {
+      class: `kind-select ${kind || "EMPTY"}`,
+      title: kind === "OUTPUT" ? actions[node.action]?.doc ?? "Choose an action"
+        : KINDS.find(([value]) => value === kind)?.[2] ?? "Choose an action, or a decision that picks a branch",
+    });
   }
 
   function inputSelect(path, nodeKind, index, item) {
@@ -278,7 +369,7 @@ export async function mount(root, treeId, query) {
     const choices = ref.inputs.filter((i) => i.kind === wanted);
     return select([
       item ? null : option("", `choose a ${wanted} input…`),
-      choices.map((i) => option(i.name, i.name, i.doc)),
+      choices.map((i) => option(i.name, `${i.name} · ${i.cost}`, `${i.doc ? `${i.doc} ` : ""}Costs ${i.cost} point${i.cost === 1 ? "" : "s"}.`)),
     ], item?.name, (value) => setInput(path, index, value), {
       class: item ? "" : "unset",
       title: item ? inputs[item.name]?.doc || item.name : `Choose a ${wanted} input`,
@@ -319,21 +410,65 @@ export async function mount(root, treeId, query) {
     return select(names.map((n) => option(n, n)), value, (v) => setArg(target, index, v), { class: "arg" });
   }
 
+  // An open menu is placed against the window rather than the outline, which scrolls and would
+  // cut it off: below its ⋯ if there's room, otherwise above, and never off the right edge.
+  function placeMenu(event) {
+    const details = event.currentTarget;
+    if (!details.open) return;
+    const menu = details.querySelector(".menu");
+    const at = details.querySelector("summary").getBoundingClientRect();
+    menu.style.left = `${Math.max(8, Math.min(at.left, innerWidth - menu.offsetWidth - 8))}px`;
+    const below = innerHeight - at.bottom;
+    if (below < menu.offsetHeight + 8 && at.top > below) {
+      menu.style.top = "";
+      menu.style.bottom = `${innerHeight - at.top + 2}px`;
+      menu.style.maxHeight = `${at.top - 16}px`;
+    } else {
+      menu.style.bottom = "";
+      menu.style.top = `${at.bottom + 2}px`;
+      menu.style.maxHeight = `${below - 16}px`;
+    }
+  }
+
   // A small ⋯ menu at the end of each row, so the buttons don't take up room on every line.
   function rowMenu(path) {
     const node = getAt(path);
     const item = (text, title, onclick, extra = {}) => h("button", { ...extra, title, onclick }, text);
-    return h("details", { class: "row-menu" },
-      h("summary", { title: "Focus, copy, paste or clear this branch" }, "⋯"),
+    const label = (text) => h("span", { class: "menu-label" }, text);
+    const decision = node && node.kind !== "OUTPUT";
+    const parent = path.length ? getAt(path.slice(0, -1)) : null;
+    const branches = parent ? ref.nodes[parent.kind].branches : [];
+    const here = path.at(-1);
+    return h("details", { class: "row-menu", ontoggle: placeMenu },
+      h("summary", { title: "Focus, copy, paste, move or clear this branch" }, "⋯"),
       h("div", { class: "menu" },
-        node && node.kind !== "OUTPUT" ? item("Focus on this branch", "Show just this branch", () => {
+        decision ? item("Focus on this branch", "Show just this branch", () => {
           ed.ui.focus = pathKey(path);
           ed.ui.open.set(pathKey(path), true);
           renderOutline();
         }) : null,
         item("Copy", "Copy this branch, to paste somewhere else", () => copyAt(path)),
+        node ? item("Cut", "Copy this branch and empty its slot, to move it somewhere else", () => cutAt(path)) : null,
         item("Paste", clipboard ? "Replace this branch with the copied one" : "Copy a branch first",
           () => pasteAt(path), { disabled: !clipboard }),
+
+        node ? [label("Insert a decision above"),
+          KINDS.filter(([kind]) => kind !== "OUTPUT").map(([kind, text]) => {
+            const first = ref.nodes[kind].branches[0];
+            return item(`${text} (this goes under “${first}”)`,
+              `Put a new ${text} node here, with this branch as its “${first}” branch`, () => insertAbove(path, kind));
+          })] : null,
+
+        branches.length > 1 ? [label(`Swap this “${branches[here]}” branch with`),
+          branches.map((name, i) => (i === here ? null : item(`the “${name}” branch`,
+            `Swap the “${branches[here]}” and “${name}” branches, with everything under them`,
+            () => swapBranches(path.slice(0, -1), here, i))))] : null,
+
+        decision && node.children.some(Boolean) ? [label("Replace this decision with its"),
+          ref.nodes[node.kind].branches.map((name, i) => (node.children[i] ? item(`“${name}” branch`,
+            `Drop this question and the other branches, keeping just the “${name}” branch`,
+            () => keepBranch(path, i)) : null))] : null,
+
         node ? item("Clear", "Empty this slot (Ctrl+Z to undo)", () => setKind(path, null), { class: "danger" }) : null));
   }
 
@@ -341,7 +476,6 @@ export async function mount(root, treeId, query) {
     const { path, json: node } = view;
     const parts = [kindSelect(path, node)];
     if (node?.kind === "OUTPUT") {
-      parts.push(actionSelect(path, node));
       if (node.action) {
         parts.push(argEditors(actions[node.action]?.args ?? [], node.args, () => getAt(path)));
       }
@@ -388,6 +522,47 @@ export async function mount(root, treeId, query) {
     if (tree) tree.scrollLeft = scroll;
     undoButton.disabled = !ed.history.length;
     redoButton.disabled = !ed.future.length;
+    renderCost();
+  }
+
+  // The tree's cost, and for a player's own tree, how it fits their budget and whether it's
+  // their default tree (the one that plays for them when someone else picks them to fight).
+  function renderCost() {
+    const own = ed.tree.owner !== null && ed.tree.owner === user().id;
+    const available = { ...usableTrees(trees, ed.tree.owner), [ed.tree.name]: ed.tree };
+    const team = teamCost(ed.tree, available, ref);
+    const others = Object.keys(team.trees).filter((n) => n !== ed.tree.name);
+    const budget = user().budget;
+    const over = own && team.cost > budget;
+    const isDefault = own && user().startTree === ed.tree.name;
+
+    async function makeDefault() {
+      try {
+        updateUser(await put("/api/me", { startTree: ed.tree.name }));
+        renderCost();
+      } catch (e) {
+        showError(e.message);
+      }
+    }
+
+    fill(costCard,
+      h("div", { class: "card-head" }, h("h2", {}, "Cost"),
+        own ? h("span", { class: `badge ${over ? "warn" : "ok"}` }, `${team.cost} / ${budget} points`)
+          : h("span", { class: "badge" }, `${team.cost} points`)),
+      own ? h("div", { class: "meter", title: `${team.cost} of ${budget} points` },
+        h("span", { class: over ? "over" : "", style: `width:${Math.min(100, (100 * team.cost) / budget)}%` })) : null,
+      h("p", { class: "hint" }, others.length
+        ? `This tree costs ${treeCost(ed.tree.root, ref)} points, and ${team.cost} with ${others.join(", ")}, which it switches to.`
+        : "Each input costs the points shown next to it, and each action costs 1."),
+      own ? h("p", { class: "hint" }, over
+        ? `That's over your budget of ${budget} points at level ${user().level}, so it can't go into battle. Simplify it, or level up for more points.`
+        : `Your budget is ${budget} points at level ${user().level}. Each level adds more.`)
+        : h("p", { class: "hint" }, "Default trees aren't limited by a budget. Your own copy of one is."),
+      own ? (isDefault
+        ? h("p", { class: "default-note" }, "This is your default tree: it defends you when other players pick you to fight.")
+        : h("button", { class: "small", onclick: makeDefault, disabled: over || ed.problems.length > 0,
+          title: over ? "It's over your budget" : ed.problems.length ? "Finish it first" : "" }, "Make this my default tree"))
+        : null);
   }
 
   // Another tree with this owner already has the name? A clash would stop the whole tree saving,
@@ -411,7 +586,9 @@ export async function mount(root, treeId, query) {
       },
       onchange: () => { if (!name.classList.contains("invalid")) render(); },
     });
-    const owner = select([
+    const ownerName = ed.tree.owner === null ? "Default (every player can use it)"
+      : ed.tree.owner === user().id ? "You" : players.find((p) => p.id === ed.tree.owner)?.name ?? ed.tree.owner;
+    const owner = !isAdmin() ? h("span", { class: "owner-name" }, ownerName) : select([
       option("", "Default (every player can use it)"),
       players.map((p) => option(p.id, p.name)),
     ], ed.tree.owner, (value) => {
@@ -491,8 +668,14 @@ export async function mount(root, treeId, query) {
       if (!menu.contains(event.target)) menu.open = false;
     }
   };
+  // A menu placed against the window would drift from its row when anything scrolls, so close it.
+  const onScroll = (event) => {
+    if (event.target.closest?.(".row-menu")) return;
+    for (const menu of outline.querySelectorAll("details.row-menu[open]")) menu.open = false;
+  };
   document.addEventListener("keydown", onKey);
   document.addEventListener("click", onClick);
+  document.addEventListener("scroll", onScroll, true);
   window.addEventListener("beforeunload", onUnload);
 
   render();
@@ -505,6 +688,7 @@ export async function mount(root, treeId, query) {
   return () => {
     document.removeEventListener("keydown", onKey);
     document.removeEventListener("click", onClick);
+    document.removeEventListener("scroll", onScroll, true);
     window.removeEventListener("beforeunload", onUnload);
     if (ed.dirty) save().catch(() => showError("The last tree change wasn't saved."));
   };

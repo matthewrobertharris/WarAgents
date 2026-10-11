@@ -1,23 +1,8 @@
-import shutil
 from pathlib import Path
 
-import pytest
+from conftest import sign_in
 
-from waragents.web.app import DEFAULT_CATALOGUE, create_app
-
-
-BUNDLED = {"maps": ["basic", "islands", "skirmish"], "trees": ["defend", "graze", "guard", "raid", "wander"]}
-
-
-@pytest.fixture
-def client(tmp_path):
-    """A client for the app with its own copy of the bundled maps and trees. Anything else in
-    python/catalogue (your own maps, trees, players and games) is left out."""
-    for kind, ids in BUNDLED.items():
-        (tmp_path / "catalogue" / kind).mkdir(parents=True)
-        for item_id in ids:
-            shutil.copy(DEFAULT_CATALOGUE / kind / f"{item_id}.json", tmp_path / "catalogue" / kind)
-    return create_app(tmp_path / "catalogue").test_client()
+from waragents.web.app import create_app
 
 
 def new_game(client, **changes):
@@ -78,7 +63,7 @@ def test_saved_games_are_listed_and_survive_a_restart(client, tmp_path):
     assert [t["startTree"] for t in games[0]["teams"]] == ["graze", "raid"]
 
     # A new app on the same catalogue has nothing in memory, so it rebuilds the game from its record.
-    restarted = create_app(tmp_path / "catalogue").test_client()
+    restarted = sign_in(create_app(tmp_path / "catalogue"), "Admin")
     assert restarted.get(f"/api/games/{game['id']}").json["state"]["time"] == 0
     replayed = restarted.post(f"/api/games/{game['id']}/step", json={"turns": 8}).json
     assert replayed["state"]["agents"] == stepped["state"]["agents"]
