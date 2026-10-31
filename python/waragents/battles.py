@@ -12,7 +12,6 @@ default tree. Practice opponents ("bots") play a default tree and have no player
 from __future__ import annotations
 
 import random
-import threading
 from datetime import datetime
 from typing import Any
 
@@ -21,9 +20,6 @@ from .progression import (DEFAULT_MAX_TURNS, account_xp, budget_for, level_for, 
                           season_bonus)
 from .scenario import build_world, check_map, check_tree, map_slots, team_cost
 from .world import World
-
-# Account XP is read, added to and written back, so one battle's rewards at a time.
-_REWARDS = threading.Lock()
 
 
 def budget_of(player: dict[str, Any]) -> int:
@@ -194,20 +190,19 @@ def settle(catalogue: Catalogue, game_id: str, record: dict[str, Any], world: Wo
     placements = [{**p, "player": teams[p["slot"]].get("player"), "colour": teams[p["slot"]].get("colour")}
                   for p in world.result["placements"]]
     rewards: dict[str, dict[str, Any]] = {}
-    with _REWARDS:
+    with catalogue.atomic():
         for place in placements:
             player_id = place["player"]
-            if not player_id or player_id in rewards or not catalogue.exists("players", player_id):
+            if not player_id or player_id in rewards:
                 continue
             from_agents = account_xp(mode, place["exp"]) if count_agent_xp else 0
             extra = (bonus or {}).get(player_id, 0)
             if mode == "season":
                 extra += season_bonus(place["place"], len(placements))
-            player = catalogue.get("players", player_id)
-            before = player.get("xp") or 0
-            after = before + from_agents + extra
-            if after != before:
-                catalogue.update("players", player_id, {**player, "xp": after})
+            xp = catalogue.add_xp(player_id, from_agents + extra)
+            if xp is None:
+                continue  # the player has been deleted
+            before, after = xp
             rewards[player_id] = {
                 "agentXp": place["exp"],
                 "fromAgents": from_agents,

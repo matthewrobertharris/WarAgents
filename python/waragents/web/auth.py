@@ -16,9 +16,7 @@ from __future__ import annotations
 
 import os
 import re
-import secrets
 from functools import wraps
-from pathlib import Path
 from typing import Any
 
 from flask import Blueprint, abort, current_app, jsonify, request, session
@@ -36,18 +34,10 @@ OPEN_PATHS = re.compile(r"^/api/(auth/|reference$)")
 bp = Blueprint("auth", __name__)
 
 
-def secret_key(catalogue_root: Path) -> str:
+def secret_key(catalogue: Catalogue) -> str:
     """The key that signs session cookies: WARAGENTS_SECRET, or one made once and kept in the
-    catalogue folder so sign-ins survive a restart."""
-    if os.environ.get("WARAGENTS_SECRET"):
-        return os.environ["WARAGENTS_SECRET"]
-    path = Path(catalogue_root) / ".secret"
-    if path.exists():
-        return path.read_text(encoding="utf-8").strip()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    key = secrets.token_hex(32)
-    path.write_text(key, encoding="utf-8")
-    return key
+    database, so sign-ins survive a restart and work on every server."""
+    return os.environ.get("WARAGENTS_SECRET") or catalogue.secret("session-key")
 
 
 def _catalogue() -> Catalogue:
@@ -178,7 +168,7 @@ def register():
     if len(password) < MIN_PASSWORD:
         abort(422, f"Passwords need at least {MIN_PASSWORD} characters")
     # The first account on a server, or the first since every admin was deleted, runs it.
-    first = not any(p.get("admin") for p in catalogue.list("players"))
+    first = not catalogue.any_admin()
     player = {"name": name, "colour": None, "startTree": None,
               "passwordHash": generate_password_hash(password), **({"admin": True} if first else {})}
     catalogue.create_with_id("players", username, player)
@@ -229,9 +219,7 @@ def update_me():
         status = tree_status(catalogue, user["id"], body["startTree"])
         if not status["ready"]:
             abort(400, f"'{body['startTree']}' can't be your default tree. {status['problem']}.")
-    record = {k: v for k, v in user.items() if k != "id"}
-    record.update({k: body[k] for k in ("name", "colour", "startTree") if k in body})
-    catalogue.update("players", user["id"], record)
+    catalogue.update_player(user["id"], {k: body[k] for k in ("name", "colour", "startTree") if k in body})
     return profile(user["id"])
 
 
@@ -250,10 +238,7 @@ def change_password():
 
 def set_password(catalogue: Catalogue, player_id: str, password: str, admin: bool | None = None) -> None:
     """Give a player a new password (and make them an admin or not, if admin is given)."""
-    player = catalogue.get("players", player_id)
-    player["passwordHash"] = generate_password_hash(password)
+    changes: dict[str, Any] = {"passwordHash": generate_password_hash(password)}
     if admin is not None:
-        player.pop("admin", None)
-        if admin:
-            player["admin"] = True
-    catalogue.update("players", player_id, player)
+        changes["admin"] = admin
+    catalogue.update_player(player_id, changes)

@@ -5,18 +5,16 @@ Every tutorial's model answer has to complete it, and a tree that only defends h
 """
 
 import json
-import shutil
 
 import pytest
 from conftest import sign_up
 
 from waragents.battles import run_to_end
-from waragents.catalogue import Catalogue
+from waragents.content import CONTENT_DIR, seed
 from waragents.progression import MODE_XP_FACTOR, TUTORIAL_BONUS
 from waragents.training import TRACKS, check_tutorial
-from waragents.web.app import DEFAULT_CATALOGUE
 
-TUTORIALS = sorted((DEFAULT_CATALOGUE / "tutorials").glob("*.json"))
+TUTORIALS = sorted((CONTENT_DIR / "tutorials").glob("*.json"))
 DEFEND = {"name": "defend-only", "owner": None, "root": {"kind": "OUTPUT", "action": "DEFEND"}}
 
 
@@ -24,9 +22,8 @@ def load(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def play(tmp_path, tutorial, trees, seed=1):
+def play(cat, tutorial, trees, seed=1):
     """Play a tutorial with these trees for the player (the first is the start tree)."""
-    cat = Catalogue(tmp_path / "cat")
     team = {"slot": 1, "trees": trees, "startTree": trees[0]["name"], **tutorial.get("team", {})}
     bots = [{**bot, "player": None} for bot in tutorial.get("bots", [])]
     _, record = cat.new_game(tutorial["map"], [team, *bots], seed, mode="training",
@@ -49,9 +46,9 @@ def test_each_tutorial_is_valid(path):
 
 @pytest.mark.parametrize("path", TUTORIALS, ids=lambda p: p.stem)
 @pytest.mark.parametrize("seed", [1, 2, 3])
-def test_the_model_answer_completes_the_tutorial(tmp_path, path, seed):
+def test_the_model_answer_completes_the_tutorial(empty_catalogue, path, seed):
     tutorial = load(path)
-    world = play(tmp_path, tutorial, [tutorial["solution"], *tutorial.get("solutionTrees", [])], seed)
+    world = play(empty_catalogue, tutorial, [tutorial["solution"], *tutorial.get("solutionTrees", [])], seed)
     assert world.result["winners"] == [1] or 1 in world.result["winners"], world.outcome
     assert world.time <= tutorial["maxTurns"]
 
@@ -59,18 +56,18 @@ def test_the_model_answer_completes_the_tutorial(tmp_path, path, seed):
 def test_the_corridor_has_no_loops():
     """A loop in the corridor would let a tree that follows one wall go round it forever. With
     no loops, the open tiles form a tree: one fewer joins between neighbours than tiles."""
-    dirt = load(DEFAULT_CATALOGUE / "tutorials" / "movement-5.json")["map"]["dirt"]
+    dirt = load(CONTENT_DIR / "tutorials" / "movement-5.json")["map"]["dirt"]
     tiles = {(x, y) for y, row in enumerate(dirt) for x, d in enumerate(row) if d is not None}
     joins = sum((x + 1, y) in tiles for x, y in tiles) + sum((x, y + 1) in tiles for x, y in tiles)
     assert joins == len(tiles) - 1
 
 
 @pytest.mark.parametrize("path", TUTORIALS, ids=lambda p: p.stem)
-def test_just_defending_does_not_complete_the_tutorial(tmp_path, path):
+def test_just_defending_does_not_complete_the_tutorial(empty_catalogue, path):
     tutorial = load(path)
     if tutorial["solution"]["root"] == DEFEND["root"]:
         pytest.skip("defending is the lesson")
-    world = play(tmp_path, tutorial, [DEFEND])
+    world = play(empty_catalogue, tutorial, [DEFEND])
     assert 1 not in world.result["winners"], world.outcome
 
 
@@ -78,8 +75,8 @@ def test_just_defending_does_not_complete_the_tutorial(tmp_path, path):
 
 
 @pytest.fixture
-def trained(app, catalogue_dir):
-    shutil.copytree(DEFAULT_CATALOGUE / "tutorials", catalogue_dir / "tutorials")
+def trained(app, catalogue):
+    seed(catalogue, only={"tutorials": [p.stem for p in TUTORIALS]})
     sign_up(app, "Admin")
     return sign_up(app, "Alice")
 
@@ -130,4 +127,4 @@ def test_a_failed_run_earns_nothing(trained):
 def test_tutorial_progress_cannot_be_faked(trained):
     trained.put("/api/catalogue/players/alice", json={"name": "Alice", "training": {"movement-7": {"turns": 1}}})
     trained.put("/api/me", json={"training": {"movement-7": {"turns": 1}}})
-    assert trained.get("/api/me").json.get("training") is None
+    assert trained.get("/api/me").json["training"] == {}

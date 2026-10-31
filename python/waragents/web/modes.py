@@ -16,7 +16,7 @@ from ..battles import bot_trees, start_skirmish, tree_status
 from ..catalogue import Catalogue
 from ..progression import level_for
 from ..scenario import check_tree, tree_cost
-from .auth import admin_only, can_read, game_players, me
+from .auth import admin_only, can_read, me
 
 bp = Blueprint("modes", __name__)
 
@@ -84,7 +84,7 @@ def read_tutorial(tutorial_id: str):
     catalogue, user = _catalogue(), me()
     tutorial = catalogue.get("tutorials", tutorial_id)
     name = training.tree_name(tutorial_id)
-    tree = next((t for t in catalogue.list("trees") if t.get("owner") == user["id"] and t.get("name") == name), None)
+    tree = catalogue.find_tree(user["id"], name)
     done = training.progress(user).get(tutorial_id)
     order = [t["id"] for t in training.ordered(catalogue)]
     position = order.index(tutorial_id)
@@ -197,37 +197,10 @@ def end_season(season_id: str):
 # ---- history and results ----------------------------------------------------------------------
 
 
-def _mine(game: dict[str, Any], user: dict[str, Any]) -> bool:
-    return game.get("createdBy") == user["id"] or user["id"] in game_players(game)
-
-
 @bp.get("/api/history")
 def history():
     """Every game you started or had a team in, newest first, with how you did."""
-    catalogue, user = _catalogue(), me()
-    entries = []
-    for game in catalogue.list("games"):
-        if "error" in game or not _mine(game, user):
-            continue
-        result = catalogue.result(game["id"])
-        mine = next((p for p in (result or {}).get("placements", []) if p.get("player") == user["id"]), None)
-        entries.append({
-            "id": game["id"],
-            "name": game.get("name"),
-            "mode": game.get("mode", "sandbox"),
-            "created": game.get("created"),
-            "mapName": (game.get("map") or {}).get("name"),
-            "attacker": game.get("createdBy"),
-            "teams": [{k: t.get(k) for k in ("name", "colour", "slot", "player")} for t in game.get("teams", [])],
-            "finished": result is not None,
-            "outcome": (result or {}).get("outcome"),
-            "place": mine["place"] if mine else None,
-            "winners": (result or {}).get("winners", []),
-            "teamCount": len(game.get("teams", [])),
-            "xp": (result or {}).get("rewards", {}).get(user["id"], {}).get("total"),
-            "seen": result is None or user["id"] in result.get("seenBy", []),
-        })
-    return sorted(entries, key=lambda e: e["created"] or "", reverse=True)
+    return _catalogue().history(me()["id"])
 
 
 def _readable_game(game_id: str) -> dict[str, Any]:
@@ -252,11 +225,8 @@ def read_result(game_id: str):
 def mark_seen(game_id: str):
     """Note that you've looked at a result, so History stops calling it new."""
     _readable_game(game_id)
-    catalogue, user = _catalogue(), me()
-    result = catalogue.result(game_id)
-    if result is None:
+    catalogue = _catalogue()
+    if not catalogue.exists("results", game_id):
         abort(404, "That game has no result yet")
-    if user["id"] not in result.get("seenBy", []):
-        result["seenBy"] = [*result.get("seenBy", []), user["id"]]
-        catalogue.update("results", game_id, result)
+    catalogue.mark_seen(game_id, me()["id"])
     return {"seen": True}

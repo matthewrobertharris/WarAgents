@@ -1,11 +1,12 @@
-"""Writes catalogue/tutorials/*.json, the Training tutorials. Edit the tutorials here and run
+"""Writes content/tutorials/*.json, the Training tutorials. Edit the tutorials here and run
 
     python tools/make_tutorials.py
 
 from the python folder, then pytest (tests/test_tutorials.py checks every model answer completes
-its tutorial, and that just defending doesn't).
+its tutorial, and that just defending doesn't), then `python -m waragents.db seed` to load them
+into the database.
 
-The designs come from resources/tutorials/*.xlsx. In those sheets, columns B to K are x 0 to 9 and
+The designs come from docs/tutorials/*.xlsx. In those sheets, columns B to K are x 0 to 9 and
 rows 2 to 11 are y 9 to 0. Pink cells are the agent, green the goal (or a plant), grey walls (holes
 here) and blue enemies. Some maps are changed to suit the engine's rules: climbing only costs health
 at a height difference of 2, so the hills are steeper than in the sheets.
@@ -16,9 +17,9 @@ from pathlib import Path
 
 PYTHON_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PYTHON_DIR))
-from waragents.catalogue import dumps  # noqa: E402
+from waragents.content import dumps  # noqa: E402
 
-OUT = PYTHON_DIR / "catalogue" / "tutorials"
+OUT = PYTHON_DIR / "content" / "tutorials"
 W = H = 10
 
 

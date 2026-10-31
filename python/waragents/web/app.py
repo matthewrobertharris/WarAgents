@@ -4,13 +4,13 @@ Every API call apart from signing in needs a signed-in player, and what they can
 is decided in auth.py. Running games are kept in memory, one copy per game and viewer, so two
 people watching the same game don't move each other's turn. A game that isn't in memory, for
 example after a restart, is rebuilt from its saved record, which holds its seed and starting
-conditions. The catalogue folder defaults to python/catalogue. Set WARAGENTS_CATALOGUE, or pass
---catalogue to `python -m waragents.web`, to use another one.
+conditions. Everything is stored in the PostgreSQL database named by WARAGENTS_DATABASE_URL
+(see db/__init__.py). For a production server, run create_app() under a WSGI server, such as
+`waitress-serve --call waragents.web.app:create_app`.
 """
 
 from __future__ import annotations
 
-import os
 import random
 import threading
 from collections import OrderedDict
@@ -27,6 +27,8 @@ from ..actions import ACTION_ARGS, ACTION_DOCS, Activity
 from ..battles import tree_status
 from ..progression import action_cost, action_exp, budget_for, input_cost, xp_for_level
 from ..catalogue import KINDS, Catalogue, CatalogueError, NotFound
+from ..db import Database, database_url
+from ..db.migrate import require_current
 from ..inputs import INPUTS
 from ..mapfile import MapFormatError
 from ..positions import SIMPLE_POSITIONS
@@ -38,9 +40,7 @@ from ..world import MAX_DIRT, MAX_FOOD, MODES, World
 from . import auth, modes
 from .auth import can_change, can_read, is_admin, me, public
 
-PYTHON_DIR = Path(__file__).resolve().parents[2]
 STATIC_DIR = Path(__file__).resolve().parent / "static"
-DEFAULT_CATALOGUE = PYTHON_DIR / "catalogue"
 
 SUMMARY_FIELDS = {"id", "width", "height", "slots", "problems", "error", "cost"}
 MAX_SESSIONS = 50
@@ -164,13 +164,25 @@ def optional_field(body: dict, name: str, kind: type):
     return value
 
 
-def create_app(catalogue_dir: Path | str | None = None) -> Flask:
+def connect() -> Catalogue:
+    """The catalogue in the database named by WARAGENTS_DATABASE_URL, which must be set up.
+    Raises DatabaseNotReady with what to do if it isn't."""
+    db = Database(database_url())
+    try:
+        require_current(db)
+    except Exception:
+        db.close()
+        raise
+    return Catalogue(db)
+
+
+def create_app(catalogue: Catalogue | None = None) -> Flask:
     app = Flask(__name__, static_folder=STATIC_DIR, static_url_path="/static")
     app.json.sort_keys = False
-    catalogue = Catalogue(catalogue_dir or os.environ.get("WARAGENTS_CATALOGUE") or DEFAULT_CATALOGUE)
+    catalogue = catalogue or connect()
     sessions = Sessions(catalogue)
     app.extensions["waragents"] = {"catalogue": catalogue, "sessions": sessions}
-    app.secret_key = auth.secret_key(catalogue.root)
+    app.secret_key = auth.secret_key(catalogue)
     app.config.update(SESSION_COOKIE_SAMESITE="Lax", SESSION_COOKIE_HTTPONLY=True,
                       PERMANENT_SESSION_LIFETIME=timedelta(days=30))
     app.register_blueprint(auth.bp)
@@ -265,10 +277,10 @@ def create_app(catalogue_dir: Path | str | None = None) -> Flask:
             # A file that can't be read has no owner to check, so only admins see it.
             return is_admin(user) if "error" in item else can_read(kind, item, user)
 
-        items = [summarise(kind, item) for item in catalogue.list(kind) if visible(item)]
         if kind == "games":
-            items.sort(key=lambda g: g.get("created") or "", reverse=True)
-        return items
+            return catalogue.game_summaries(None if is_admin(user) else user["id"])
+        viewer = None if is_admin(user) else user["id"]
+        return [summarise(kind, item) for item in catalogue.list(kind, viewer) if visible(item)]
 
     def one_item(kind: str, item_id: str) -> dict[str, Any]:
         """A whole item. Maps and trees also say what stops them being played, as in the list."""
@@ -427,5 +439,3 @@ def create_app(catalogue_dir: Path | str | None = None) -> Flask:
 
     return app
 
-
-app = create_app()

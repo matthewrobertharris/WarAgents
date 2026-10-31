@@ -1,12 +1,14 @@
 """Run the web app, or manage accounts.
 
-    python -m waragents.web [--host HOST] [--port PORT] [--reload] [--catalogue DIR]
-    python -m waragents.web set-password PLAYER [--admin | --not-admin] [--catalogue DIR]
+    python -m waragents.web [--host HOST] [--port PORT] [--reload]
+    python -m waragents.web set-password PLAYER [--admin | --not-admin]
+
+Both use the database named by WARAGENTS_DATABASE_URL. Set it up first with
+python -m waragents.db setup.
 """
 
 import argparse
 import getpass
-import os
 import sys
 
 
@@ -15,15 +17,15 @@ def serve(argv: list[str]) -> None:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--reload", action="store_true", help="restart when code changes")
-    parser.add_argument("--catalogue", help="folder for maps, trees, players and games "
-                                            "(default: python/catalogue)")
     args = parser.parse_args(argv)
-    if args.catalogue:
-        # An environment variable rather than an argument, so the reloader's child process sees it.
-        os.environ["WARAGENTS_CATALOGUE"] = args.catalogue
 
-    from .app import app
+    from ..db import DatabaseNotReady
+    from .app import create_app
 
+    try:
+        app = create_app()
+    except DatabaseNotReady as e:
+        sys.exit(str(e))
     print(f"WarAgents running at http://{args.host}:{args.port}")
     app.run(host=args.host, port=args.port, use_reloader=args.reload, threaded=True)
 
@@ -36,15 +38,18 @@ def set_password(argv: list[str]) -> None:
     admin = parser.add_mutually_exclusive_group()
     admin.add_argument("--admin", action="store_true", default=None, help="make them an admin")
     admin.add_argument("--not-admin", dest="admin", action="store_false", help="stop them being an admin")
-    parser.add_argument("--catalogue", help="the catalogue folder (default: python/catalogue)")
     args = parser.parse_args(argv)
 
-    from ..catalogue import Catalogue, CatalogueError, NotFound
-    from .app import DEFAULT_CATALOGUE
+    from ..catalogue import CatalogueError, NotFound
+    from ..db import DatabaseNotReady
+    from .app import connect
     from .auth import MIN_PASSWORD
     from .auth import set_password as save
 
-    catalogue = Catalogue(args.catalogue or os.environ.get("WARAGENTS_CATALOGUE") or DEFAULT_CATALOGUE)
+    try:
+        catalogue = connect()
+    except DatabaseNotReady as e:
+        sys.exit(str(e))
     if not catalogue.exists("players", args.player):
         sys.exit(f"There's no player '{args.player}'")
     password = getpass.getpass(f"New password for {args.player}: ")
@@ -62,8 +67,9 @@ def set_password(argv: list[str]) -> None:
 def main() -> None:
     try:
         import flask  # noqa: F401
-    except ImportError:
-        sys.exit(f"Flask isn't installed for this Python ({sys.executable}).\n"
+        import psycopg  # noqa: F401
+    except ImportError as e:
+        sys.exit(f"{e.name} isn't installed for this Python ({sys.executable}).\n"
                  "Activate the project's virtual environment first (.venv\\Scripts\\activate, or "
                  "source .venv/bin/activate on macOS/Linux), or install it with: pip install -e .")
     argv = sys.argv[1:]
