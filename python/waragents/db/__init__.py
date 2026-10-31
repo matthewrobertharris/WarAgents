@@ -62,10 +62,14 @@ def database_url(variable: str = URL_VARIABLE) -> str:
 
 
 class Database:
-    def __init__(self, url: str, min_size: int = 1, max_size: int = 10):
+    def __init__(self, url: str, min_size: int = 1, max_size: int = 10, schema: str | None = None):
+        """schema, if given, is where every table is found and made, instead of public. The tests
+        use one of their own so they never touch the game's data."""
         self.url = url
-        self.pool = ConnectionPool(url, min_size=min_size, max_size=max_size, open=False,
-                                   kwargs={"autocommit": True, "row_factory": dict_row})
+        kwargs: dict[str, Any] = {"autocommit": True, "row_factory": dict_row}
+        if schema is not None:
+            kwargs["options"] = f"-c search_path={schema}"
+        self.pool = ConnectionPool(url, min_size=min_size, max_size=max_size, open=False, kwargs=kwargs)
         # The connection of the transaction this thread is in, if any.
         self._current: ContextVar[psycopg.Connection | None] = ContextVar(f"waragents-db-{id(self)}",
                                                                           default=None)

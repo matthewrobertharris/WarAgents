@@ -7,22 +7,22 @@ the [main README](../README.md) for what the game is.
 
 You need Python 3.11 or newer and PostgreSQL 15 or newer.
 
-1. Make a database role and two databases, one for the game and one the tests can wipe. As a
-   Postgres superuser (for example `psql -U postgres`):
+1. Make a database role and a database. As a Postgres superuser (for example `psql -U postgres`):
 
    ```sql
    create role waragents login password 'choose-a-password';
    create database waragents owner waragents;
-   create database waragents_test owner waragents;
    ```
 
-2. Tell the game where they are. Either set these environment variables or put them in
-   `python/.env`, which git ignores:
+2. Tell the game where it is. Either set this environment variable or put it in `python/.env`,
+   which git ignores:
 
    ```
    WARAGENTS_DATABASE_URL=postgresql://waragents:choose-a-password@localhost:5432/waragents
-   WARAGENTS_TEST_DATABASE_URL=postgresql://waragents:choose-a-password@localhost:5432/waragents_test
    ```
+
+   The game only knows about this one database. A test or staging environment is another
+   deployment with its own database and its own `WARAGENTS_DATABASE_URL`.
 
 3. Install, set up the database, and run:
 
@@ -39,8 +39,10 @@ The web app is a Flask app. Use `--port` to change the port and `--reload` to re
 when the code changes. For a production server, run `waragents.web.app:create_app()` under a WSGI
 server. Any number of them can share one database.
 
-Run the tests with `pytest`. The ones that need a database use `WARAGENTS_TEST_DATABASE_URL`, and
-are skipped if it isn't set.
+Run the tests with `pytest`. The ones that need a database use `WARAGENTS_DATABASE_URL`, but make
+a schema of their own in it (`pytest_...`), migrate it, and drop it when they finish, so they never
+touch the game's data. The role needs permission to create schemas, which the database's owner
+has. Without `WARAGENTS_DATABASE_URL` those tests are skipped and the engine tests still run.
 
 ### Looking after the database
 

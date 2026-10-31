@@ -1,13 +1,16 @@
-"""Fixtures: a test database, catalogues in it, and web apps with clients signed in as different
-players.
+"""Fixtures: a database schema of the tests' own, catalogues in it, and web apps with clients
+signed in as different players.
 
-The tests that need a database use WARAGENTS_TEST_DATABASE_URL (from the environment or
-python/.env). It must be a database of its own, because the tests wipe it. Without it those tests
-are skipped and the engine tests still run.
+The tests that need a database use the game's database (WARAGENTS_DATABASE_URL, from the
+environment or python/.env), but make a schema of their own in it for each run and drop it at the
+end, so the game's data is never touched. Without a database those tests are skipped and the
+engine tests still run.
 """
 
 import os
+import secrets
 
+import psycopg
 import pytest
 
 from waragents.catalogue import Catalogue
@@ -22,25 +25,30 @@ PASSWORD = "correct horse"
 
 @pytest.fixture(scope="session")
 def database():
-    """The test database, emptied and migrated once per run."""
+    """The game's database, with the tests' own freshly migrated schema."""
     load_env()
-    url = os.environ.get("WARAGENTS_TEST_DATABASE_URL")
+    url = os.environ.get(URL_VARIABLE)
     if not url:
-        pytest.skip("Set WARAGENTS_TEST_DATABASE_URL to run the tests that need a database")
-    if url == os.environ.get(URL_VARIABLE):
-        pytest.exit("WARAGENTS_TEST_DATABASE_URL is the game's own database, which the tests would wipe")
-    db = Database(url, max_size=4)
-    db.execute("drop schema public cascade; create schema public")
-    migrate(db)
-    yield db
-    db.close()
+        pytest.skip(f"Set {URL_VARIABLE} to run the tests that need a database")
+    schema = f"pytest_{os.getpid()}_{secrets.token_hex(3)}"
+    with psycopg.connect(url, autocommit=True) as conn:
+        conn.execute(f"create schema {schema}")
+    db = Database(url, max_size=4, schema=schema)
+    try:
+        migrate(db)
+        yield db
+    finally:
+        db.close()
+        with psycopg.connect(url, autocommit=True) as conn:
+            conn.execute(f"drop schema {schema} cascade")
 
 
 @pytest.fixture
 def empty_catalogue(database):
     """A catalogue with nothing in it."""
     tables = [r["tablename"] for r in database.query(
-        "select tablename from pg_tables where schemaname = 'public' and tablename <> 'schema_migrations'")]
+        "select tablename from pg_tables where schemaname = current_schema() "
+        "and tablename <> 'schema_migrations'")]
     database.execute(f"truncate {', '.join(tables)} cascade")
     return Catalogue(database)
 
