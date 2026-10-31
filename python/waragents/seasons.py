@@ -1,6 +1,6 @@
 """Seasons: ranked battles on generated maps.
 
-A season is saved in catalogue/seasons/<id>.json:
+A season reads from the catalogue as:
 
     {"name": "Season 1", "status": "open", "started": "2026-10-11T09:00:00", "ended": null,
      "ratings": {"alice": {"rating": 1016.0, "games": 3, "wins": 2}},
@@ -17,7 +17,6 @@ final standings are saved in the season.
 from __future__ import annotations
 
 import random
-import threading
 from datetime import datetime
 from typing import Any
 
@@ -25,11 +24,8 @@ from . import mapgen
 from .battles import battle_teams, run_to_end, settle, tree_status
 from .catalogue import Catalogue, CatalogueError
 from .progression import (MATCH_COST_RANGE, MATCH_COST_WIDEN, RATING_START, SEASON_MAX_TURNS,
-                          SEASON_MIN_GAMES, band_label, level_band, level_for, level_summary,
+                          SEASON_MIN_GAMES, level_band, level_for, level_summary,
                           rating_changes, season_reward)
-
-# Ratings are read, changed and written back, so one battle's changes at a time.
-_RATINGS = threading.Lock()
 
 
 def now() -> str:
@@ -51,13 +47,13 @@ def check_season(data: Any) -> list[str]:
 
 def current(catalogue: Catalogue) -> dict[str, Any] | None:
     """The open season, with its id, or None."""
-    return next((s for s in catalogue.list("seasons") if s.get("status") == "open"), None)
+    return catalogue.open_season()
 
 
 def start(catalogue: Catalogue, name: str | None = None) -> str:
     if current(catalogue):
         raise CatalogueError(["A season is already running. End it first."])
-    number = len(catalogue.list("seasons")) + 1
+    number = catalogue.count("seasons") + 1
     return catalogue.create("seasons", {"name": name or f"Season {number}", "status": "open",
                                         "started": now(), "ended": None, "ratings": {}, "standings": None})
 
@@ -119,35 +115,30 @@ def battle(catalogue: Catalogue, player_id: str, tree_name: str, seed: int | Non
     placements = world.result["placements"]
     by_slot = {t["slot"]: t["player"] for t in record["teams"]}
     players = [by_slot[p["slot"]] for p in placements]
-    with _RATINGS:
-        # Read it again, in case another battle has saved since.
-        season = {"id": season["id"], **catalogue.get("seasons", season["id"])}
-        before = [rating_of(season, pid) for pid in players]
+    with catalogue.atomic():
+        # Locked, so another battle can't change these ratings until this one is saved.
+        ratings = catalogue.lock_ratings(season["id"], players, RATING_START)
+        before = [ratings[pid]["rating"] for pid in players]
         changes = rating_changes(before, [p["place"] for p in placements])
-        ratings = season.setdefault("ratings", {})
         extra = {}
         outright = len(world.result["winners"]) == 1
         for pid, old, change, place in zip(players, before, changes, placements):
-            entry = ratings.get(pid, {"rating": RATING_START, "games": 0, "wins": 0})
-            entry = {"rating": round(old + change, 1), "games": entry["games"] + 1,
-                     "wins": entry["wins"] + (1 if place["place"] == 1 and outright else 0)}
-            ratings[pid] = entry
+            entry = {"rating": round(old + change, 1), "games": ratings[pid]["games"] + 1,
+                     "wins": ratings[pid]["wins"] + (1 if place["place"] == 1 and outright else 0)}
+            catalogue.save_rating(season["id"], pid, entry)
             extra[pid] = {"rating": {"before": round(old, 1), "after": entry["rating"]}}
-        catalogue.update("seasons", season["id"], season)
-    result = settle(catalogue, game_id, record, world, extra_rewards=extra)
+        result = settle(catalogue, game_id, record, world, extra_rewards=extra)
     return {"gameId": game_id, "result": result}
 
 
 def leaderboard(catalogue: Catalogue, season: dict[str, Any]) -> list[dict[str, Any]]:
     """Everyone who has played in the season, best rating first, with their level band."""
     rows = []
-    for player_id, entry in season.get("ratings", {}).items():
-        if not catalogue.exists("players", player_id):
-            continue
-        player = catalogue.get("players", player_id)
-        level = level_for(player.get("xp") or 0)
-        rows.append({"player": player_id, "name": player["name"], "colour": player.get("colour"),
-                     "level": level, "band": level_band(level), **entry})
+    for row in catalogue.season_players(season["id"]):
+        level = level_for(row["xp"])
+        rows.append({"player": row["player"], "name": row["name"], "colour": row["colour"],
+                     "level": level, "band": level_band(level),
+                     **{k: row[k] for k in ("rating", "games", "wins")}})
     rows.sort(key=lambda r: (-r["rating"], -r["wins"], r["name"].lower()))
     for n, row in enumerate(rows):
         row["rank"] = n + 1
@@ -157,24 +148,19 @@ def leaderboard(catalogue: Catalogue, season: dict[str, Any]) -> list[dict[str, 
 def close(catalogue: Catalogue, season_id: str) -> dict[str, Any]:
     """End a season: rank players within their level band, give out the rewards, and save the
     final standings. Returns the closed season."""
-    season = catalogue.get("seasons", season_id)
-    if season.get("status") != "open":
-        raise CatalogueError(["That season has already ended"])
-    rows = leaderboard(catalogue, season)
-    standings = []
-    for band in sorted({r["band"] for r in rows}):
-        ranked = [r for r in rows if r["band"] == band and r["games"] >= SEASON_MIN_GAMES]
-        unranked = [r for r in rows if r["band"] == band and r["games"] < SEASON_MIN_GAMES]
-        entries = []
-        for n, row in enumerate(ranked):
-            xp = season_reward(row["level"], n + 1, len(ranked))
-            player = catalogue.get("players", row["player"])
-            before = player.get("xp") or 0
-            catalogue.update("players", row["player"], {**player, "xp": before + xp})
-            entries.append({**row, "bandRank": n + 1, "reward": xp,
-                            "before": level_summary(before), "after": level_summary(before + xp)})
-        entries += [{**row, "bandRank": None, "reward": 0} for row in unranked]
-        standings.append({"band": band, "label": band_label(band), "players": entries})
-    season.update({"status": "closed", "ended": now(), "standings": standings})
-    catalogue.update("seasons", season_id, season)
-    return {"id": season_id, **season}
+    catalogue.get("seasons", season_id)  # raises NotFound
+    with catalogue.atomic():
+        if not catalogue.close_season(season_id):
+            raise CatalogueError(["That season has already ended"])
+        rows = leaderboard(catalogue, {"id": season_id})
+        for band in sorted({r["band"] for r in rows}):
+            ranked = [r for r in rows if r["band"] == band and r["games"] >= SEASON_MIN_GAMES]
+            unranked = [r for r in rows if r["band"] == band and r["games"] < SEASON_MIN_GAMES]
+            for n, row in enumerate(ranked):
+                xp = season_reward(row["level"], n + 1, len(ranked))
+                before, _ = catalogue.add_xp(row["player"], xp)
+                catalogue.save_standing(season_id, {**row, "bandRank": n + 1, "reward": xp,
+                                                    "before": level_summary(before)})
+            for row in unranked:
+                catalogue.save_standing(season_id, {**row, "bandRank": None, "reward": 0})
+    return {"id": season_id, **catalogue.get("seasons", season_id)}

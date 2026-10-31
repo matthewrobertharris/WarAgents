@@ -1,9 +1,0 @@
-{
-  "name": "tut-movement-2",
-  "owner": "matt",
-  "root": {
-    "kind": "BOOLEAN",
-    "inputs": [{"name": "VALID_POSITION", "args": ["RIGHT"]}],
-    "children": [{"kind": "OUTPUT", "action": "MOVE_RIGHT"}, {"kind": "OUTPUT", "action": "MOVE_UP"}]
-  }
-}

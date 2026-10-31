@@ -5,6 +5,8 @@ description = "A turn-based multi-agent simulation where you program agents with
 requires-python = ">=3.11"
 dependencies = [
     "flask>=3.0",
+    "psycopg[binary]>=3.2",
+    "psycopg-pool>=3.2",
 ]
 
 [project.optional-dependencies]
@@ -19,6 +21,7 @@ include = ["waragents*"]
 
 [tool.setuptools.package-data]
 "waragents.web" = ["static/*", "static/js/*", "static/js/screens/*"]
+"waragents.db" = ["migrations/*.sql"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

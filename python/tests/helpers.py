@@ -2,7 +2,7 @@ from pathlib import Path
 
 from waragents import World, parse_map
 
-FIXTURES = Path(__file__).resolve().parents[2] / "resources" / "test"
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
 
 def load_text(name: str) -> str:
@@ -10,7 +10,7 @@ def load_text(name: str) -> str:
 
 
 def load(name: str, seed: int = 1) -> World:
-    """Load a map from the shared Java test fixtures, e.g. load("outputMaps/test_eat_fail_noFood.map")."""
+    """Load a map from the test fixtures, e.g. load("outputMaps/test_eat_fail_noFood.map")."""
     return parse_map(load_text(name), seed=seed)
 
 

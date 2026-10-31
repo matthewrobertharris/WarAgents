@@ -1,4 +1,4 @@
-"""The JSON formats the catalogue stores (maps, trees and games), and building a World from them.
+"""The JSON formats of the catalogue's maps, trees and games, and building a World from them.
 
 A map is the board without the teams. Grid row n holds y = n, as in the .map format, and null
 marks a hole: a place with no tile, which agents treat like the edge of the map. Each start is

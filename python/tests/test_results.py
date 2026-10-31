@@ -1,16 +1,13 @@
 """Agent XP, how games end (elimination, last team standing, the turn limit), placings, and
 playing a game through on the server."""
 
-import shutil
-
 import pytest
 from helpers import make
 
 from waragents.battles import run_to_end
-from waragents.catalogue import Catalogue
+from waragents.content import seed
 from waragents.progression import KILL_EXP, action_exp
 from waragents.scenario import RULES_VERSION
-from waragents.web.app import DEFAULT_CATALOGUE
 
 DEFEND = ["t (OUTPUT DEFEND)"]
 
@@ -141,12 +138,9 @@ def test_placings_rank_later_eliminations_higher():
 
 
 @pytest.fixture
-def cat(tmp_path):
-    for kind, names in {"maps": ["skirmish"], "trees": ["graze", "guard", "raid", "wander"]}.items():
-        (tmp_path / kind).mkdir()
-        for name in names:
-            shutil.copy(DEFAULT_CATALOGUE / kind / f"{name}.json", tmp_path / kind)
-    return Catalogue(tmp_path)
+def cat(empty_catalogue):
+    seed(empty_catalogue, only={"maps": ["skirmish"], "trees": ["graze", "guard", "raid", "wander"]})
+    return empty_catalogue
 
 
 def skirmish(cat, seed=7):

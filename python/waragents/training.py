@@ -1,6 +1,7 @@
 """Training: tutorials that each teach one idea on a small map.
 
-A tutorial is saved in catalogue/tutorials/<id>.json:
+A tutorial is written by tools/make_tutorials.py to content/tutorials/<id>.json and loaded
+into the database by `python -m waragents.db seed`:
 
     {"name": "Simple move", "track": "Movement", "order": 1, "level": "Beginner",
      "recommendedAfter": [], "brief": "...", "goal": "...", "hints": ["..."],
@@ -20,7 +21,6 @@ for its level; runs after that, and failed runs, earn nothing.
 from __future__ import annotations
 
 import random
-from datetime import datetime
 from typing import Any
 
 from .battles import run_to_end, settle
@@ -63,7 +63,7 @@ def tree_name(tutorial_id: str) -> str:
 
 def ordered(catalogue: Catalogue) -> list[dict[str, Any]]:
     """Every tutorial, by track and then order."""
-    tutorials = [t for t in catalogue.list("tutorials") if "error" not in t]
+    tutorials = catalogue.list("tutorials")
     return sorted(tutorials, key=lambda t: (TRACKS.index(t["track"]) if t.get("track") in TRACKS else 99,
                                             t.get("order", 0)))
 
@@ -76,8 +76,7 @@ def ensure_tree(catalogue: Catalogue, player_id: str, tutorial_id: str) -> str:
     """The id of the player's tree for a tutorial, made from its starter (or empty) if needed."""
     tutorial = catalogue.get("tutorials", tutorial_id)
     name = tree_name(tutorial_id)
-    existing = next((t for t in catalogue.list("trees")
-                     if t.get("owner") == player_id and t.get("name") == name), None)
+    existing = catalogue.find_tree(player_id, name)
     if existing:
         return existing["id"]
     return catalogue.create("trees", {"name": name, "owner": player_id, "root": tutorial.get("starter")})
@@ -102,16 +101,8 @@ def run(catalogue: Catalogue, player_id: str, tutorial_id: str, tree: str | None
     world = run_to_end(record)
 
     passed = 1 in world.result["winners"]
-    first_time = passed and tutorial_id not in progress(catalogue.get("players", player_id))
-    bonus = {player_id: TUTORIAL_BONUS.get(tutorial["level"], 0)} if first_time else {}
-    result = settle(catalogue, game_id, record, world, bonus=bonus, count_agent_xp=first_time)
-
-    if passed:
-        player = catalogue.get("players", player_id)
-        done = progress(player)
-        best = done.get(tutorial_id, {})
-        turns = min(world.time, best.get("turns", world.time))
-        done = {**done, tutorial_id: {"completed": best.get("completed") or datetime.now().isoformat(timespec="seconds"),
-                                      "turns": turns}}
-        catalogue.update("players", player_id, {**player, "training": done})
+    with catalogue.atomic():
+        first_time = passed and catalogue.complete_tutorial(player_id, tutorial_id, world.time)
+        bonus = {player_id: TUTORIAL_BONUS.get(tutorial["level"], 0)} if first_time else {}
+        result = settle(catalogue, game_id, record, world, bonus=bonus, count_agent_xp=first_time)
     return {"gameId": game_id, "result": result, "passed": passed, "firstTime": first_time}

@@ -1,11 +1,12 @@
-"""Tests for the JSON catalogue: storage, checks, tree ownership and new games."""
+"""Tests for the catalogue: storage, checks, tree ownership and new games."""
 
 import json
 
 import pytest
 from helpers import map_text
 
-from waragents.catalogue import Catalogue, CatalogueError, NotFound, dumps
+from waragents.catalogue import CatalogueError, NotFound
+from waragents.content import dumps
 from waragents.scenario import build_world
 
 
@@ -23,22 +24,21 @@ MAP = {
 
 
 @pytest.fixture
-def cat(tmp_path):
-    return Catalogue(tmp_path)
+def cat(empty_catalogue):
+    return empty_catalogue
 
 
-def test_create_get_update_delete(cat, tmp_path):
+def test_create_get_update_delete(cat):
     map_id = cat.create("maps", MAP)
     assert map_id == "two-rooms"
     assert cat.create("maps", MAP) == "two-rooms-2"
-    assert cat.get("maps", map_id) == MAP
+    assert cat.get("maps", map_id) == {**MAP, "owner": None, "published": False}
     cat.update("maps", map_id, {**MAP, "name": "Renamed"})
     assert cat.get("maps", map_id)["name"] == "Renamed"  # the id stays the same
     assert [m["id"] for m in cat.list("maps")] == ["two-rooms", "two-rooms-2"]
     cat.delete("maps", map_id)
     with pytest.raises(NotFound):
         cat.get("maps", map_id)
-    assert not list(tmp_path.rglob("*.tmp"))
 
 
 def test_ids_cannot_escape_the_catalogue(cat):
@@ -74,6 +74,13 @@ def test_trees_are_unique_per_owner(cat):
     with pytest.raises(CatalogueError, match="already a tree of sam's called 't'"):
         cat.create("trees", {"name": "t", "owner": sam, "root": output("EAT")})
     with pytest.raises(CatalogueError, match="still owns 1 tree"):
+        cat.delete("players", sam)
+
+
+def test_players_who_own_maps_cannot_be_deleted(cat):
+    sam = cat.create("players", {"name": "Sam"})
+    cat.create("maps", {**MAP, "owner": sam})
+    with pytest.raises(CatalogueError, match="still owns 1 map"):
         cat.delete("players", sam)
 
 

@@ -1,25 +1,61 @@
 # WarAgents (Python)
 
-A Python port of the WarAgents Java game, with a web app for running and inspecting games. See
+The WarAgents engine and the web app you play it in, with everything stored in PostgreSQL. See
 the [main README](../README.md) for what the game is.
 
 ## Running it
 
-You need Python 3.11 or newer.
+You need Python 3.11 or newer and PostgreSQL 15 or newer.
 
-```
-cd python
-python -m venv .venv
-.venv\Scripts\activate          # on macOS/Linux: source .venv/bin/activate
-pip install -e ".[dev]"
-python -m waragents.web          # then open http://127.0.0.1:8000
-```
+1. Make a database role and two databases, one for the game and one the tests can wipe. As a
+   Postgres superuser (for example `psql -U postgres`):
+
+   ```sql
+   create role waragents login password 'choose-a-password';
+   create database waragents owner waragents;
+   create database waragents_test owner waragents;
+   ```
+
+2. Tell the game where they are. Either set these environment variables or put them in
+   `python/.env`, which git ignores:
+
+   ```
+   WARAGENTS_DATABASE_URL=postgresql://waragents:choose-a-password@localhost:5432/waragents
+   WARAGENTS_TEST_DATABASE_URL=postgresql://waragents:choose-a-password@localhost:5432/waragents_test
+   ```
+
+3. Install, set up the database, and run:
+
+   ```
+   cd python
+   python -m venv .venv
+   .venv\Scripts\activate          # on macOS/Linux: source .venv/bin/activate
+   pip install -e ".[dev]"
+   python -m waragents.db setup     # creates the tables and loads the bundled maps, trees and tutorials
+   python -m waragents.web          # then open http://127.0.0.1:8000
+   ```
 
 The web app is a Flask app. Use `--port` to change the port and `--reload` to restart the server
-when the code changes. Maps, trees, players, games and the rest are saved in `catalogue/`. Use
-`--catalogue DIR` (or set `WARAGENTS_CATALOGUE`) to keep them somewhere else.
+when the code changes. For a production server, run `waragents.web.app:create_app()` under a WSGI
+server. Any number of them can share one database.
 
-Run the tests with `pytest`.
+Run the tests with `pytest`. The ones that need a database use `WARAGENTS_TEST_DATABASE_URL`, and
+are skipped if it isn't set.
+
+### Looking after the database
+
+```
+python -m waragents.db setup            apply the migrations, then load the bundled content
+python -m waragents.db migrate          apply the migrations that haven't been yet
+python -m waragents.db seed             reload the bundled maps, trees and tutorials
+python -m waragents.db import FOLDER    copy a JSON catalogue folder (the old storage) in
+python -m waragents.db status           which migrations have run, and how many of everything there are
+```
+
+Run `migrate` (or `setup`) after pulling changes that add a migration. The web app won't start
+until the database is up to date. Before the database, everything was stored as JSON files in
+`python/catalogue/`. `import` copies such a folder into the database, keeping every id, password
+and game, and skips what's already there, so it's safe to run again.
 
 ### Accounts
 
@@ -32,7 +68,7 @@ python -m waragents.web set-password matt --admin
 ```
 
 (`--admin` is optional.) Session cookies are signed with `WARAGENTS_SECRET`, or with a key the
-server makes once and keeps in `catalogue/.secret`.
+server makes once and keeps in the database, so every server sharing it accepts the same cookies.
 
 Players only see their own trees and the default trees, and only change their own trees and maps.
 Maps can be published so other players can use them. A game can be seen by whoever started it
@@ -153,11 +189,38 @@ hover) to show one branch on its own, with breadcrumbs back to the root. **Expan
 **Collapse all** do what they say. In a game, the path the agent took last turn is highlighted and
 opened, and **Follow path** forgets your own opening and closing.
 
-## The catalogue
+## Storage
 
-Everything is JSON, one file per item, in `catalogue/maps`, `trees`, `players`, `games`,
-`results`, `tutorials` and `seasons`. An item's id is its file name. `scenario.py` describes the
-map, tree and game formats in full; `training.py` and `seasons.py` describe tutorials and seasons.
+Everything lives in PostgreSQL. The schema is in `waragents/db/migrations`, one numbered `.sql`
+file per change, applied in order and recorded in `schema_migrations`. Never edit a migration
+that has been applied somewhere: add a new one.
+
+Accounts, ownership, games and their outcomes are normalised into tables with foreign keys:
+
+| Table | What's in it |
+|-------|--------------|
+| `players` | accounts: the username (`id`), name, colour, default tree, account XP, admin |
+| `credentials` | password hashes, kept apart so profiles can be shared without them |
+| `maps`, `trees` | each with its owner (null for system maps and default trees) |
+| `tutorials`, `tutorial_progress` | the tutorials, and who has completed which, in how few turns |
+| `seasons`, `season_ratings`, `season_standings` | seasons, ratings during one, and the final standings |
+| `games`, `game_teams` | a game's seed, mode, map and who played, one row per team |
+| `results`, `placements`, `rewards`, `result_views` | how a game ended, each team's place, the XP (and rating change) each player got, and who has seen the result |
+| `settings` | server-wide values, such as the session key |
+
+Values that are always read and written whole are `jsonb` columns: a map's grids, a tree's nodes,
+and the copies of the map and trees a game was played with. Those copies are what replay a game,
+so editing or deleting a map or tree later never changes an old game. Each team also records the
+catalogue tree it started with (`game_teams.tree_id`), so a tree's games can be found.
+
+Ids are readable slugs made from names (`skirmish`, `graze`, `alice`), and renaming an item keeps
+its id. A game's id is the time it started plus a random suffix.
+
+The game code reads and writes items as the JSON objects below, through `Catalogue` in
+`catalogue.py`. Changes that read a value and write it back, such as account XP, Season ratings
+and tutorial progress, are single statements or happen under row locks, so they stay right when
+many servers share the database. `scenario.py` describes the map, tree and game formats in full;
+`training.py` and `seasons.py` describe tutorials and seasons.
 
 - **Maps** are the board without teams: `dirt` and `food` grids (row n is y = n), `plants`,
   `starts`, `maxAgents`, `mode` and `criteria`, plus an `owner` (null for a system map) and
@@ -172,23 +235,27 @@ map, tree and game formats in full; `training.py` and `seasons.py` describe tuto
 - **Players** are accounts: `{"name": "Matthew", "colour": "#1c7ed6", "created": "...",
   "startTree": "graze", "xp": 350, "training": {...}, "passwordHash": "...", "admin": true}`.
   `startTree` is their default tree, looked up in their own trees and then the defaults. `xp` is
-  their account XP and `training` their completed tutorials. Players can't set either.
+  their account XP and `training` their completed tutorials. Players can't set either. A player
+  who still owns maps or trees can't be deleted.
 - **Games** hold a `mode` (`training`, `skirmish`, `season` or `sandbox`), a seed, a copy of the
   map, the teams and their trees, the turn limit (`maxTurns`) and the `rules` version, so
   editing a map or tree later doesn't change how an old game replays. A team's copy holds its
   starting tree plus every tree it can reach with `CHANGE_TREE`. `createdBy` and
   `participants` say whose History it's in.
-- **Results** are saved next to a game when it's over, under the same id: why it ended, every
-  team's place, and the XP (and rating change) each player got. They're kept apart from the
-  game, which must never change.
+- **Results** are saved when a game is over: why it ended, every team's place, and the XP (and
+  rating change) each player got. They're kept apart from the game, which must never change.
 - **Tutorials** have a goal, an explanation, hints, a map whose win conditions are for slot 1,
   the player's agent stats, any practice opponents with their own trees, and a model answer.
-  They're written by `tools/make_tutorials.py`: edit them there and run it.
 - **Seasons** have a name, whether they're open, each player's rating, battles and wins, and the
-  final standings once ended.
+  final standings once ended. Only one season can be open at a time.
 
-The bundled catalogue holds the Skirmish map and its trees (graze, guard, raid), the Basic map,
-an Islands map with holes, two small default trees, `defend` and `wander`, and 17 tutorials.
+### Bundled content
+
+`content/` holds the system maps (Skirmish, Basic, and Islands, which has holes), the default
+trees (graze, guard and raid, which the Skirmish map was made for, plus the small `defend` and
+`wander`) and 17 tutorials, as one JSON file per item named by its id. `python -m waragents.db
+seed` loads them, replacing what's in the database, so that's how changes to them reach the game.
+The tutorials are written by `tools/make_tutorials.py`: edit them there, run it, then seed.
 `wander` is the random walk that the skirmish trees repeat.
 
 ## Code layout
@@ -204,7 +271,11 @@ waragents/
   progression.py  the balance: XP, tree costs, levels and budgets, rewards, ratings
   mapfile.py      the .map parser, used for importing and by the tests
   scenario.py     the catalogue's JSON formats: checking them, tree costs, building a World
-  catalogue.py    the JSON file store, tree ownership and setting up new games
+  catalogue.py    the catalogue in PostgreSQL: reading and saving items, tree ownership, setting
+                  up new games, and the queries behind History and Seasons
+  content.py      loading the bundled content, and importing a JSON catalogue folder
+  db/             the connection pool and transactions (__init__.py), migrations (migrate.py and
+                  migrations/*.sql), and the `python -m waragents.db` commands (__main__.py)
   battles.py      playing games through, settling results and XP, setting up a Skirmish
   training.py     tutorials
   seasons.py      seasons: matchmaking, ratings and end-of-season rewards
@@ -214,25 +285,27 @@ waragents/
                   what), modes.py (Training, Skirmish, Season, History)
     static/js/    main.js (router), session.js, viewer.js, board.js, treeview.js, cost.js,
                   format.js, api.js, dom.js, screens/*.js
-catalogue/        the saved maps, trees, players, games, results, tutorials and seasons
-tools/            make_tutorials.py, which writes catalogue/tutorials
-tests/            pytest suite
+content/          the bundled system maps, default trees and tutorials
+tools/            make_tutorials.py, which writes content/tutorials
+tests/            pytest suite, with the Java version's fixture maps in tests/fixtures
 ```
 
-The engine has no dependencies. The web app needs Flask.
+The engine has no dependencies. The web app needs Flask, and storage needs psycopg 3.
 
-The tests use the Java project's fixture maps in `../resources/test`, so both versions are
-checked against the same cases. `test_outputs.py` and `test_positions.py` port the Java JUnit
-tests. `test_engine.py` covers the parser, the turn loop, the criteria and the behaviour changes
+The tests use the Java version's unit-test fixture maps, now in `tests/fixtures` (and two of its
+sample maps in `tests/maps`), so the port is checked against the same cases. `test_outputs.py`
+and `test_positions.py` port the Java JUnit tests. `test_engine.py` covers the parser, the turn loop, the criteria and the behaviour changes
 listed below, and `test_results.py` covers XP, how games end and placings. `test_auth.py`,
 `test_progression.py`, `test_modes.py`, `test_tutorials.py` and `test_season.py` cover accounts,
 costs and levels, Skirmish and History, Training (including every tutorial's model answer) and
-Seasons with generated maps. `test_web.py` covers the rest of the API.
+Seasons with generated maps. `test_web.py` covers the rest of the API, and `test_database.py`
+the database itself: migrations, seeding, importing, and changes made by many requests at once.
 
 ## Differences from the Java version
 
-The rules and messages are the same, and the ported Java tests pass against the same fixtures.
-The changes are:
+The game began as a Java program, which has since been removed (it's in the git history). The
+rules and messages are the same, and the ported Java tests pass against the same fixtures. The
+changes are:
 
 **Bugs fixed**
 - `PREVIOUS` was wrong after an agent's second move, and `SET_PRIMARY CURRENT` made the

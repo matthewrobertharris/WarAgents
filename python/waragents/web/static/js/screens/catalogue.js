@@ -137,7 +137,7 @@ export async function mount(root, [tab = "maps"]) {
   root.append(
     h("div", { class: "page-head" }, h("div", {},
       h("h1", {}, "Catalogue"),
-      h("p", { class: "hint" }, "Everything is stored as JSON files in python/catalogue, one file per item."))),
+      h("p", { class: "hint" }, "Everything is stored in the PostgreSQL database. Each item here is shown as the JSON the game reads and writes."))),
     h("nav", { class: "tabs big" }, TABS.map(([id, label]) =>
       h("a", { class: `tab${id === tab ? " current" : ""}`, href: `#/catalogue/${id}` }, label))),
     body);

@@ -2,6 +2,7 @@ from pathlib import Path
 
 from conftest import sign_in
 
+from waragents.catalogue import Catalogue
 from waragents.web.app import create_app
 
 
@@ -54,7 +55,7 @@ def test_step_back_replays_to_the_same_state(client):
     assert client.post(f"/api/games/{game_id}/seek", json={"turn": -1}).status_code == 422
 
 
-def test_saved_games_are_listed_and_survive_a_restart(client, tmp_path):
+def test_saved_games_are_listed_and_survive_a_restart(client, catalogue):
     game = new_game(client, name="My game").json
     stepped = client.post(f"/api/games/{game['id']}/step", json={"turns": 8}).json
 
@@ -63,7 +64,7 @@ def test_saved_games_are_listed_and_survive_a_restart(client, tmp_path):
     assert [t["startTree"] for t in games[0]["teams"]] == ["graze", "raid"]
 
     # A new app on the same catalogue has nothing in memory, so it rebuilds the game from its record.
-    restarted = sign_in(create_app(tmp_path / "catalogue"), "Admin")
+    restarted = sign_in(create_app(Catalogue(catalogue.db)), "Admin")
     assert restarted.get(f"/api/games/{game['id']}").json["state"]["time"] == 0
     replayed = restarted.post(f"/api/games/{game['id']}/step", json={"turns": 8}).json
     assert replayed["state"]["agents"] == stepped["state"]["agents"]
@@ -111,7 +112,7 @@ def test_create_rename_and_edit_a_map(client):
 
 
 def test_import_a_map_file(client):
-    text = (Path(__file__).resolve().parents[2] / "resources" / "test" / "basic.map").read_text()
+    text = (Path(__file__).resolve().parent / "fixtures" / "basic.map").read_text()
     result = client.post("/api/catalogue/import", json={"text": text, "name": "Basic again"})
     assert result.status_code == 201
     assert result.json["map"] == "basic-again"

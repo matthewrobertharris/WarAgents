@@ -1,9 +1,0 @@
-{
-  "name": "Test-Tree",
-  "owner": null,
-  "root": {
-    "kind": "BOOLEAN",
-    "inputs": [{"name": "ENEMY_ADJACENT"}],
-    "children": [{"kind": "OUTPUT", "action": "DEFEND"}, {"kind": "OUTPUT", "action": "EAT"}]
-  }
-}
