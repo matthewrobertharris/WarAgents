@@ -104,4 +104,5 @@ def test_put_me_changes_only_your_own_profile_fields(app):
     assert (me["name"], me["colour"], me["startTree"], me["xp"], me.get("admin")) == ("Alice B", "#2f9e44", "wander", 0, None)
     assert alice.put("/api/me", json={"startTree": "raid"}).status_code == 400
     stored = app.extensions["waragents"]["catalogue"].get("players", "alice")
-    assert set(stored) == {"name", "colour", "startTree", "created", "passwordHash"}
+    assert set(stored) == {"name", "colour", "startTree", "created", "xp", "training", "passwordHash"}
+    assert (stored["xp"], stored["training"]) == (0, {})
