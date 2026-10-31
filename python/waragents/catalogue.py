@@ -479,11 +479,13 @@ class Catalogue:
              (entry.get("before") or {}).get("xp")))
 
     def _save_games(self, item_id: str, data: dict[str, Any], new: bool,
-                    tree_ids: dict[int, str | None] | None = None) -> None:
+                    tree_ids: dict[int, str | None] | None = None, started: datetime | None = None) -> None:
+        """started, if given, is the exact time the game started. The record's "created" is only
+        to the second, which isn't enough to put games started close together in order."""
         self._upsert("games", {
             "id": item_id, "name": data["name"], "mode": data.get("mode", "sandbox"), "seed": data["seed"],
             "rules": data.get("rules"), "max_turns": data.get("maxTurns"),
-            "created_at": _moment(data.get("created"), "created") or datetime.now().astimezone(),
+            "created_at": started or _moment(data.get("created"), "created") or datetime.now().astimezone(),
             "created_by": data.get("createdBy"), "map_id": data.get("mapId"),
             "season_id": data.get("seasonId"), "tutorial_id": data.get("tutorialId"),
             "map": Jsonb(data["map"]), "criteria": Jsonb(data.get("criteria") or []),
@@ -569,6 +571,71 @@ class Catalogue:
                 do update set best_turns = least(tutorial_progress.best_turns, excluded.best_turns)
             returning xmax = 0""", (player_id, tutorial_id, turns))
 
+    # ---- friends -------------------------------------------------------------------
+
+    def friendship(self, player_id: str, other_id: str) -> str:
+        """How two players stand: "friends", "sent" (player asked other and is waiting),
+        "received" (other asked player), or "none"."""
+        row = self.db.one("""
+            select requester_id, status from friendships
+            where (requester_id, addressee_id) in ((%(a)s, %(b)s), (%(b)s, %(a)s))""", {"a": player_id, "b": other_id})
+        if row is None:
+            return "none"
+        if row["status"] == "accepted":
+            return "friends"
+        return "sent" if row["requester_id"] == player_id else "received"
+
+    def ask_friend(self, player_id: str, other_id: str) -> str:
+        """Ask another player to be friends. If they've already asked, that makes the two of you
+        friends. Returns how you stand afterwards (see friendship)."""
+        if player_id == other_id:
+            raise CatalogueError(["You can't add yourself as a friend"])
+        if not self.exists("players", other_id):
+            raise NotFound(f"There's no player called '{other_id}'")
+        with self.atomic():
+            accepted = self.db.execute("""
+                update friendships set status = 'accepted', accepted_at = now()
+                where requester_id = %s and addressee_id = %s and status = 'pending'""", (other_id, player_id))
+            if not accepted:
+                self.db.execute("""insert into friendships (requester_id, addressee_id, status) values (%s, %s, 'pending')
+                                   on conflict do nothing""", (player_id, other_id))
+        return self.friendship(player_id, other_id)
+
+    def accept_friend(self, player_id: str, other_id: str) -> bool:
+        """Accept another player's request. Returns False if there wasn't one."""
+        return self.db.execute("""
+            update friendships set status = 'accepted', accepted_at = now()
+            where requester_id = %s and addressee_id = %s and status = 'pending'""", (other_id, player_id)) == 1
+
+    def remove_friend(self, player_id: str, other_id: str) -> bool:
+        """Decline or withdraw a request, or stop being friends. Returns False if there was nothing to remove."""
+        return self.db.execute("""
+            delete from friendships
+            where (requester_id, addressee_id) in ((%(a)s, %(b)s), (%(b)s, %(a)s))""", {"a": player_id, "b": other_id}) == 1
+
+    def friends(self, player_id: str) -> dict[str, list[dict[str, Any]]]:
+        """A player's friends, the requests waiting for their answer ("received") and the ones
+        they're waiting on ("sent"), each with the other player's public details, by name."""
+        rows = self.db.query("""
+            select p.id, p.name, p.colour, p.xp, p.start_tree, f.status, f.requested_at, f.accepted_at,
+                   f.requester_id = %(me)s as asked
+            from friendships f
+            join players p on p.id = case when f.requester_id = %(me)s then f.addressee_id else f.requester_id end
+            where %(me)s in (f.requester_id, f.addressee_id)
+            order by lower(p.name), p.id""", {"me": player_id})
+        out: dict[str, list[dict[str, Any]]] = {"friends": [], "received": [], "sent": []}
+        for r in rows:
+            kind = "friends" if r["status"] == "accepted" else "sent" if r["asked"] else "received"
+            out[kind].append({"id": r["id"], "name": r["name"], "colour": r["colour"], "xp": r["xp"],
+                              "startTree": r["start_tree"], "requested": iso(r["requested_at"]),
+                              "since": iso(r["accepted_at"])})
+        return out
+
+    def friend_requests(self, player_id: str) -> int:
+        """How many requests are waiting for this player's answer."""
+        return self.db.value("select count(*) from friendships where addressee_id = %s and status = 'pending'",
+                             (player_id,))
+
     def secret(self, name: str) -> str:
         """A random value made the first time it's asked for and the same ever after, for every
         server sharing the database."""
@@ -639,7 +706,7 @@ class Catalogue:
             game_id = f"{now:%Y%m%d-%H%M%S}-{secrets.token_hex(2)}"
             try:
                 with self.atomic():
-                    self._save_games(game_id, game, new=True, tree_ids=tree_ids)
+                    self._save_games(game_id, game, new=True, tree_ids=tree_ids, started=now.astimezone())
                 return game_id, game
             except errors.UniqueViolation:
                 continue  # two games started in the same second drew the same id
@@ -651,6 +718,16 @@ class Catalogue:
         self._check("games", game, None)
         with self.atomic():
             self._save_games(game_id, game, new=True)
+            self.link_trees(game_id)
+
+    def link_trees(self, game_id: str) -> None:
+        """For a game that didn't record which catalogue tree each team started with (one from a
+        JSON catalogue), find it by name: the team's player's own tree, or else a default tree."""
+        self.db.execute("""
+            update game_teams t set tree_id = coalesce(
+                (select id from trees where owner_id = t.player_id and name = t.start_tree),
+                (select id from trees where owner_id is null and name = t.start_tree))
+            where t.game_id = %s and t.tree_id is null and t.player_id is not null""", (game_id,))
 
     def save_result(self, game_id: str, result: dict[str, Any]) -> None:
         """Save a finished game's result. A game only ever gets one."""
@@ -662,6 +739,34 @@ class Catalogue:
                 self._save_results(game_id, result, new=True)
         except errors.UniqueViolation as e:
             raise CatalogueError([f"Game '{game_id}' already has a result"]) from e
+
+    def save_stats(self, game_id: str, players: list) -> None:
+        """Save (or replace) what each team did in a finished game: the stats.TeamStats of each
+        of the world's players, matched to the game's teams by slot."""
+        from .stats import STATS_VERSION
+
+        with self.atomic():
+            self.db.execute("delete from team_stats where game_id = %s", (game_id,))
+            for player in players:
+                s = player.stats
+                self.db.execute("""
+                    insert into team_stats (game_id, slot, stats_version, kills, deaths, births,
+                        damage_dealt, damage_taken, blocks, food_eaten, confused, peak_agents, agents, health)
+                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                    (game_id, player.slot, STATS_VERSION, s.kills, s.deaths, s.births, s.damage_dealt,
+                     s.damage_taken, s.blocks, s.food_eaten, s.confused, max(s.agents, default=0),
+                     s.agents, s.health))
+                actions = sorted(set(s.succeeded) | set(s.failed))
+                with self.db.transaction() as conn:
+                    with conn.cursor() as cur:
+                        cur.executemany("""insert into team_actions (game_id, slot, action, succeeded, failed)
+                                           values (%s, %s, %s, %s, %s)""",
+                                        [(game_id, player.slot, a, s.succeeded[a], s.failed[a]) for a in actions])
+                        cur.executemany("""
+                            insert into team_node_visits (game_id, slot, tree_name, node_id, visits, confused)
+                            values (%s, %s, %s, %s, %s, %s)""",
+                            [(game_id, player.slot, tree, node, count, s.confused_at.get(tree, {}).get(node, 0))
+                             for tree, nodes in s.visits.items() for node, count in sorted(nodes.items())])
 
     def result(self, game_id: str) -> dict[str, Any] | None:
         return self.get("results", game_id) if self.exists("results", game_id) else None

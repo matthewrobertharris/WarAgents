@@ -37,7 +37,7 @@ from ..scenario import (CRITERIA, ScenarioError, build_world, check_map, check_t
 from ..serialize import event_to_dict, world_to_dict
 from ..tree import NODE_SHAPES
 from ..world import MAX_DIRT, MAX_FOOD, MODES, World
-from . import auth, modes
+from . import analytics, auth, friends, modes
 from .auth import can_change, can_read, is_admin, me, public
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -187,6 +187,8 @@ def create_app(catalogue: Catalogue | None = None) -> Flask:
                       PERMANENT_SESSION_LIFETIME=timedelta(days=30))
     app.register_blueprint(auth.bp)
     app.register_blueprint(modes.bp)
+    app.register_blueprint(analytics.bp)
+    app.register_blueprint(friends.bp)
     app.before_request(auth.require_sign_in)
 
     # Errors are JSON with a `detail` message, which is what the front end shows.

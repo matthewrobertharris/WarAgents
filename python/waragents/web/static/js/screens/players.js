@@ -1,18 +1,13 @@
-// Players (#/players) and a player's public profile (#/players/<id>): their level, whether they
-// can be picked to fight, and the games you've played together. Trees stay private. Your own
-// settings are on the Account screen.
+// Players (#/players, admins only) and a player's public profile (#/players/<id>, anyone): their
+// level, whether they can be picked to fight, how you stand as friends, and the games you've
+// played together. Trees stay private. Your own settings are on the Account screen, and the
+// players you know are on the Friends screen.
 
 import { get } from "../api.js";
-import { PALETTE } from "../colours.js";
-import { empty, formatDate, formatDay, h } from "../dom.js";
+import { empty, fill, formatDate, formatDay, h } from "../dom.js";
 import { modeBadge, placeText } from "../format.js";
-import { user } from "../session.js";
-
-const initials = (name) => (name ?? "?").trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
-
-function avatar(player, big = false) {
-  return h("span", { class: `avatar${big ? " big" : ""}`, style: `background:${player.colour ?? PALETTE[6]}` }, initials(player.name));
-}
+import { avatar, friendControls } from "../people.js";
+import { isAdmin, user } from "../session.js";
 
 // Everyone, with the level and readiness /api/opponents gives for players other than you.
 async function everyone() {
@@ -24,6 +19,7 @@ async function everyone() {
 }
 
 async function list(root) {
+  if (!isAdmin()) throw new Error("Only admins can see every player. Your friends are on the Friends screen.");
   const players = await everyone();
   const card = (p) => h("a", { class: "player-card", href: `#/players/${p.id}` },
     avatar(p),
@@ -34,28 +30,31 @@ async function list(root) {
   root.append(
     h("div", { class: "page-head" }, h("div", {},
       h("h1", {}, "Players"),
-      h("p", { class: "hint" }, "Everyone who plays. Pick someone ready to fight from their profile, or in Battle."))),
+      h("p", { class: "hint" }, "Everyone who plays. Only admins see this list."))),
     h("section", { class: "card" },
       players.length ? h("div", { class: "player-grid" }, players.map(card)) : empty("No players yet.")));
 }
 
 async function profile(root, playerId) {
-  const [players, history] = await Promise.all([everyone(), get("/api/history")]);
-  const player = players.find((p) => p.id === playerId);
-  if (!player) throw new Error(`There's no player called '${playerId}'`);
+  const [player, history] = await Promise.all([get(`/api/players/${playerId}`), get("/api/history")]);
   const together = history.filter((g) => g.teams.some((t) => t.player === playerId));
   const me = user();
+  const actions = h("div", { class: "head-actions" });
+
+  async function drawActions() {
+    Object.assign(player, await get(`/api/players/${playerId}`));
+    fill(actions,
+      isAdmin() ? h("a", { class: "button", href: "#/players" }, "All players") : h("a", { class: "button", href: "#/friends" }, "Friends"),
+      player.you ? h("a", { class: "button primary", href: "#/account" }, "Edit your account") : friendControls(player, drawActions),
+      !player.you && player.ready ? h("a", { class: "button", href: `#/battle?opponent=${playerId}` }, `Fight ${player.name}`) : null);
+  }
 
   root.append(
     h("div", { class: "page-head" },
       h("div", { class: "player-head" }, avatar(player, true), h("div", {},
         h("h1", {}, player.name),
         h("p", { class: "hint" }, `Level ${player.level ?? 1}`, player.created ? ` · joined ${formatDay(player.created)}` : ""))),
-      h("div", { class: "head-actions" },
-        h("a", { class: "button", href: "#/players" }, "All players"),
-        player.you ? h("a", { class: "button primary", href: "#/account" }, "Edit your account")
-          : player.ready ? h("a", { class: "button primary", href: `#/battle?opponent=${playerId}` }, `Fight ${player.name}`)
-            : null)),
+      actions),
     h("div", { class: "layout player-layout" },
       h("section", { class: "card" },
         h("h2", {}, player.you ? "Your games" : "Games together"),
@@ -71,6 +70,7 @@ async function profile(root, playerId) {
             ? (player.you ? `Ready: ${me.defaultTree.name}, ${me.defaultTree.cost} points.` : `Ready, and it costs ${player.treeCost} points.`)
             : "Not ready, so they can't be picked to fight yet."),
           h("p", { class: "hint" }, "Players' trees are private. You only see what their agents do in battle.")))));
+  await drawActions();
 }
 
 export async function mount(root, [playerId]) {

@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from .progression import AGENT_LEVEL_BASE, action_exp
+from .stats import TeamStats
 
 if TYPE_CHECKING:
     from .actions import Action
@@ -145,6 +146,8 @@ class Agent:
         # The tree and node ids this agent used for its last decision.
         self.last_path_tree: str | None = None
         self.last_path: list[int] = []
+        self.acted: int | None = None  # the turn this agent last acted
+        self.worked = False  # whether that action succeeded
         self.history: list[AgentSnapshot] = [self.snapshot(birth)]
 
     @property
@@ -214,6 +217,7 @@ class Player:
         self.colour: str | None = None  # for display only
         self.agents: list[Agent] = []  # alive agents
         self.all_agents: list[Agent] = []  # every agent this player has had
+        self.stats = TeamStats()  # what the team has done, for analytics
 
     def add_agent(self, agent: Agent) -> None:
         self.agents.append(agent)
@@ -314,6 +318,8 @@ class World:
         player.add_agent(agent)
         self.agents.append(agent)
         self.tile(pos).agent = agent
+        if self.time > 0:
+            player.stats.births += 1
         self.log("birth", f"{agent.id} ({player.name}) was born at {pos}", agent)
         return agent
 
@@ -330,6 +336,7 @@ class World:
         tile.agent = None
         agent.player.agents.remove(agent)
         self.agents.remove(agent)
+        agent.player.stats.deaths += 1
         self.log("death", f"{agent.id} ({agent.player.name}) died at {agent.pos}", agent)
 
     def update_agent(self, agent: Agent) -> bool:
@@ -344,6 +351,8 @@ class World:
         agent.last_path = path
         agent.set_action(action)
         result = action.perform(agent, self)
+        agent.acted, agent.worked = self.time, result
+        agent.player.stats.decided(agent.last_path_tree, path, action.activity.value, result)
         if result:
             agent.gain_exp(action_exp(action.activity.value))
         agent.history.append(agent.snapshot(self.time))
@@ -354,6 +363,8 @@ class World:
         if self.finished:
             return []
         start = len(self.events)
+        if self.time == 0:
+            self._count_turn()  # how every team starts
         self.time += 1
 
         # One bubble-sort pass on speed per turn, so faster agents drift to the front.
@@ -370,7 +381,12 @@ class World:
             plant.update(self)
 
         self._check_finished()
+        self._count_turn()
         return self.events[start:]
+
+    def _count_turn(self) -> None:
+        for player in self.players:
+            player.stats.turn_ended(len(player.agents), sum(a.health for a in player.agents))
 
     def _check_finished(self) -> None:
         """End the game if a criterion is met, one team is left standing, or time is up.

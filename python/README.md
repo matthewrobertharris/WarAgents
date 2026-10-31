@@ -47,10 +47,11 @@ has. Without `WARAGENTS_DATABASE_URL` those tests are skipped and the engine tes
 ### Looking after the database
 
 ```
-python -m waragents.db setup            apply the migrations, then load the bundled content
+python -m waragents.db setup            apply the migrations, load the bundled content, count stats
 python -m waragents.db migrate          apply the migrations that haven't been yet
 python -m waragents.db seed             reload the bundled maps, trees and tutorials
 python -m waragents.db import FOLDER    copy a JSON catalogue folder (the old storage) in
+python -m waragents.db stats            count the Analytics stats of games that don't have them yet
 python -m waragents.db status           which migrations have run, and how many of everything there are
 ```
 
@@ -102,8 +103,9 @@ All the numbers above are in `progression.py`.
 
 ## The web app
 
-The top bar has Training, Battle, Workshop, Maps, History, Players and Guide, plus your name and
-level (which open your Account). Each screen has its own URL, such as `#/battle`.
+The top bar has Training, Battle, Workshop, Maps, History, Analytics, Friends and Guide (and, for
+admins, Players and Catalogue), plus your name and level (which open your Account). Each screen
+has its own URL, such as `#/battle`.
 
 - **Home** (`#/`): your level, XP and budget, whether your default tree is ready, a suggested next
   step, and results you haven't looked at yet.
@@ -136,6 +138,33 @@ level (which open your Account). Each screen has its own URL, such as `#/battle`
   screen. The side panels show the teams, the selected agent, its decision tree and an event log.
 - **History** (`#/history`): every game you started or had a team in, newest first, filtered by
   mode, with your place, XP and which results are new.
+- **Analytics** (`#/analytics`): charts of how your trees have done in your own finished games
+  (Training, Skirmish and Season), and what your opponents did in them. One row of filters scopes everything: when, mode, tree, tree
+  version, map, opponent, result and season. They're kept in the address, so a view can be
+  bookmarked. Clicking a bar filters by it, and clicking it again clears that filter. The page
+  shows your win rate and other headline numbers, results over time, and wins and losses by tree,
+  map, opponent and mode. Your opponents get the same treatment as you for everything a replay
+  shows: you against them per team per game (kills, deaths, damage, food, births, how many of
+  their actions worked), agents and health across a game for both sides, and what each side's
+  agents did. Their trees, and which branches they took, stay private. Pick one tree and it adds:
+  - **By version**: every edit of a tree that has played is a new version (v1, v2, ...), so you
+    can see whether a change helped.
+  - **Which nodes fire**: the tree as an outline, with each node's share of all decisions and
+    where agents got confused, so you can see which branches matter and which never run.
+
+  Every chart has a **Table** button with the same numbers, and the games that match are listed
+  at the bottom.
+
+  **Export these games** downloads every turn of every game that matches the filters (the newest
+  500) as CSV files in a zip, to analyse yourself: the games, the teams, each team's agents and
+  health every turn, every agent every turn (where it was, its stats, what it carried, what it
+  did and whether it worked), the board as it changed, and the event log. The README in the zip
+  describes every column. Like a replay, it includes your agents' trees, decision paths and
+  remembered positions, and leaves those out for everyone else.
+- **Guide** (`#/guide`): how the game works, then what agents can do (every action, in groups),
+  then the questions they can ask and the positions those questions are about, then the ways to
+  play, XP and levels, and what trees cost. It's built from `/api/reference`, so it always matches
+  the server.
 - **Workshop** (`#/trees`): your trees and the default trees. Default trees open read-only:
   **Duplicate** one to make your own copy. **New tree** starts with an empty root. The editor
   (`#/trees/<id>`) is the collapsible outline with a dropdown for every choice on each row,
@@ -179,10 +208,16 @@ level (which open your Account). Each screen has its own URL, such as `#/battle`
   start, and its win conditions only refer to slots and tiles that exist.
 - **Account** (`#/account`): your name, colour, default tree and password, your level, and your
   record.
-- **Players** (`#/players`): everyone, with their level and whether they can be picked to fight. A
-  player's page has the games you've played together and a button to fight them.
-- **Guide** (`#/guide`): how the game works, the ways to play, XP and levels, and every input and
-  action with its cost. It's built from `/api/reference`, so it always matches the server.
+- **Friends** (`#/friends`): add a friend by their player name, answer the requests waiting for
+  you (the top bar shows how many), cancel ones you've sent, and see your friends, with a button to
+  fight those whose default tree is ready. A request only becomes a friendship once the other
+  player accepts it, and until then only the two of you see it. Either of you can end it.
+- **A player's profile** (`#/players/<id>`): open to everyone signed in, from a leaderboard, a
+  result or your friends. It has their level, whether they can be picked to fight, the games
+  you've played together, and **Add friend** (or how you stand: request sent, accept or decline,
+  or friends).
+- **Players** (`#/players`, admins only): everyone, with their level and whether they can be
+  picked to fight.
 - **Catalogue** (admins only): maps, trees, players and games, with delete. The **Import .map**
   tab converts a Java-format `.map` file into a map and its trees.
 
@@ -208,12 +243,23 @@ Accounts, ownership, games and their outcomes are normalised into tables with fo
 | `seasons`, `season_ratings`, `season_standings` | seasons, ratings during one, and the final standings |
 | `games`, `game_teams` | a game's seed, mode, map and who played, one row per team |
 | `results`, `placements`, `rewards`, `result_views` | how a game ended, each team's place, the XP (and rating change) each player got, and who has seen the result |
+| `friendships` | friend requests and friendships: who asked whom, and whether it's been accepted (one per pair of players) |
 | `settings` | server-wide values, such as the session key |
 
 Values that are always read and written whole are `jsonb` columns: a map's grids, a tree's nodes,
 and the copies of the map and trees a game was played with. Those copies are what replay a game,
 so editing or deleting a map or tree later never changes an old game. Each team also records the
-catalogue tree it started with (`game_teams.tree_id`), so a tree's games can be found.
+catalogue tree it started with (`game_teams.tree_id`), so a tree's games can be found, and a
+fingerprint of the trees it played with (`game_teams.tree_hash`), which tells a tree's versions
+apart.
+
+What each team did in a finished game is counted while it plays (`stats.py`) and saved when it's
+settled, for Analytics: `team_stats` (kills, deaths, damage, food, births, confusion, and the
+agents and health at the end of every turn), `team_actions` (each action, and how often it
+worked) and `team_node_visits` (how often each node of each tree was visited). Games replay
+exactly, so older games are counted by replaying them (`python -m waragents.db stats`, which
+`setup` runs too). When what's counted changes, `stats.STATS_VERSION` goes up and they're counted
+again.
 
 Ids are readable slugs made from names (`skirmish`, `graze`, `alice`), and renaming an item keeps
 its id. A game's id is the time it started plus a random suffix.
@@ -279,13 +325,19 @@ waragents/
   db/             the connection pool and transactions (__init__.py), migrations (migrate.py and
                   migrations/*.sql), and the `python -m waragents.db` commands (__main__.py)
   battles.py      playing games through, settling results and XP, setting up a Skirmish
+  stats.py        what each team does in a game, counted as it plays, for Analytics
+  analytics.py    the Analytics queries: filters, breakdowns, you against your opponents, tree
+                  versions, node visits, and counting older games (backfill)
+  export.py       exporting every turn of a player's games as a zip of CSVs, by replaying them
   training.py     tutorials
   seasons.py      seasons: matchmaking, ratings and end-of-season rewards
   mapgen.py       generated maps for Season battles
   serialize.py    World to JSON for the web app
   web/            Flask app: app.py (catalogue and games), auth.py (accounts and who can do
-                  what), modes.py (Training, Skirmish, Season, History)
+                  what), modes.py (Training, Skirmish, Season, History), analytics.py,
+                  friends.py (friends and players' profiles)
     static/js/    main.js (router), session.js, viewer.js, board.js, treeview.js, cost.js,
+                  charts.js (the Analytics charts), people.js (avatars and friend buttons),
                   format.js, api.js, dom.js, screens/*.js
 content/          the bundled system maps, default trees and tutorials
 tools/            make_tutorials.py, which writes content/tutorials
@@ -300,8 +352,10 @@ and `test_positions.py` port the Java JUnit tests. `test_engine.py` covers the p
 listed below, and `test_results.py` covers XP, how games end and placings. `test_auth.py`,
 `test_progression.py`, `test_modes.py`, `test_tutorials.py` and `test_season.py` cover accounts,
 costs and levels, Skirmish and History, Training (including every tutorial's model answer) and
-Seasons with generated maps. `test_web.py` covers the rest of the API, and `test_database.py`
-the database itself: migrations, seeding, importing, and changes made by many requests at once.
+Seasons with generated maps. `test_web.py` covers the rest of the API, `test_database.py`
+the database itself (migrations, seeding, importing, and changes made by many requests at once),
+`test_friends.py` friends and profiles, and `test_analytics.py` what the engine counts, the
+Analytics filters and views, and the export (including that it keeps opponents' trees private).
 
 ## Differences from the Java version
 

@@ -153,6 +153,7 @@ def profile(player_id: str) -> dict[str, Any]:
         **public(player),
         **level_summary(player.get("xp") or 0),
         "defaultTree": tree_status(catalogue, player_id, player.get("startTree")),
+        "friendRequests": catalogue.friend_requests(player_id),
     }
 
 

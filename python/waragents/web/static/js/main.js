@@ -6,8 +6,10 @@
 
 import { $, fill, h, showError } from "./dom.js";
 import * as account from "./screens/account.js";
+import * as analytics from "./screens/analytics.js";
 import * as battle from "./screens/battle.js";
 import * as catalogue from "./screens/catalogue.js";
+import * as friends from "./screens/friends.js";
 import * as guide from "./screens/guide.js";
 import * as history from "./screens/history.js";
 import * as home from "./screens/home.js";
@@ -30,12 +32,14 @@ const ROUTES = [
   { pattern: /^\/season(?:\/([\w-]+))?$/, screen: season, section: "battle", title: "Season" },
   { pattern: /^\/results\/([\w-]+)$/, screen: results, section: "history", title: "Result" },
   { pattern: /^\/history$/, screen: history, section: "history", title: "History" },
+  { pattern: /^\/analytics$/, screen: analytics, section: "analytics", title: "Analytics" },
   { pattern: /^\/play\/([\w-]+)$/, screen: play, section: "history", title: "Replay" },
   { pattern: /^\/sandbox$/, screen: newGame, section: "battle", title: "Sandbox" },
   { pattern: /^\/trees(?:\/([\w-]+))?$/, screen: trees, section: "trees", title: "Workshop" },
   { pattern: /^\/maps(?:\/([\w-]+))?$/, screen: maps, section: "maps", title: "Maps" },
   { pattern: /^\/account$/, screen: account, section: "account", title: "Your account" },
   { pattern: /^\/players(?:\/([\w-]+))?$/, screen: players, section: "players", title: "Players" },
+  { pattern: /^\/friends$/, screen: friends, section: "friends", title: "Friends" },
   { pattern: /^\/guide$/, screen: guide, section: "guide", title: "Guide" },
   { pattern: /^\/catalogue(?:\/(\w+))?$/, screen: catalogue, section: "catalogue", title: "Catalogue" },
 ];
@@ -53,6 +57,9 @@ function renderAccount() {
   $("account").hidden = $("nav").hidden = !me;
   for (const link of document.querySelectorAll("[data-admin]")) link.hidden = !isAdmin();
   if (!me) return;
+  // How many friend requests are waiting for an answer.
+  fill($("nav-friends"), "Friends", me.friendRequests
+    ? h("span", { class: "badge count", title: `${me.friendRequests} friend request(s) waiting for you` }, me.friendRequests) : null);
   fill($("account"),
     h("a", { href: "#/account", class: "account-name", title: "Your account" },
       h("span", { class: "dot", style: me.colour ? `background:${me.colour}` : "" }), me.name,
@@ -131,4 +138,5 @@ async function route() {
 }
 
 window.addEventListener("hashchange", route);
+window.addEventListener("waragents:user", renderAccount);
 route();

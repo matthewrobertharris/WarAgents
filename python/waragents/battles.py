@@ -225,4 +225,5 @@ def settle(catalogue: Catalogue, game_id: str, record: dict[str, Any], world: Wo
             "seenBy": [],
         }
         catalogue.save_result(game_id, result)
+        catalogue.save_stats(game_id, world.players)
     return result

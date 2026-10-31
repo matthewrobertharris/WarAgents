@@ -139,10 +139,16 @@ def attack(attacker: Agent, defender: Agent, world: World) -> bool:
     if defender.action is not None and defender.action.activity is Activity.DEFEND:
         power //= 2
         defender.gain_exp(BLOCK_EXP)
-    defender.health = defender.health - HEIGHT_POWER[height_diff](power)
+        defender.player.stats.blocks += 1
+    damage = HEIGHT_POWER[height_diff](power)
+    landed = max(0, min(damage, defender.health))  # a blow can't take more health than there is
+    attacker.player.stats.damage_dealt += landed
+    defender.player.stats.damage_taken += landed
+    defender.health = defender.health - damage
     if defender.health < 1:
         world.kill(defender)
         attacker.gain_exp(KILL_EXP)
+        attacker.player.stats.kills += 1
     return True
 
 
@@ -270,6 +276,7 @@ class Eat(Action):
         eaten = min(tile.food, agent.max_health - agent.health)
         tile.food -= eaten
         agent.health += eaten
+        agent.player.stats.food_eaten += eaten
         return True
 
 
